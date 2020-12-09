@@ -46,6 +46,8 @@ pub type OpaqueGrandpaAuthoritiesSet = Vec<u8>;
 /// Substrate client type.
 ///
 /// Cloning `Client` is a cheap operation.
+// bear
+// substrate rpc client 为了辅助 relayer 使用
 pub struct Client<C: Chain> {
 	/// Client connection params.
 	params: ConnectionParams,

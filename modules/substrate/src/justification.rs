@@ -194,6 +194,8 @@ pub(crate) mod tests {
 	const TEST_GRANDPA_ROUND: u64 = 1;
 	const TEST_GRANDPA_SET_ID: SetId = 1;
 
+	// bear
+	// 这里 mock 一个 precommit 组建过程
 	pub(crate) fn signed_precommit(
 		signer: Ed25519Keyring,
 		target: HeaderId,
@@ -217,6 +219,7 @@ pub(crate) mod tests {
 		}
 	}
 
+	
 	pub(crate) fn make_justification_for_header(
 		header: &TestHeader,
 		round: u64,

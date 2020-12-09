@@ -222,6 +222,9 @@ impl frame_system::Trait for Runtime {
 impl pallet_aura::Trait for Runtime {
 	type AuthorityId = AuraId;
 }
+
+// bear
+// pallet: pallet_bridge_call_dispatch
 impl pallet_bridge_call_dispatch::Trait for Runtime {
 	type Event = Event;
 	type MessageId = (bp_message_lane::LaneId, bp_message_lane::MessageNonce);
@@ -314,10 +317,14 @@ impl pallet_session::Trait for Runtime {
 	type WeightInfo = ();
 }
 
+// bear
+// 新增加的 pallet， pallet_substrate_bridge
 impl pallet_substrate_bridge::Trait for Runtime {
 	type BridgedChain = bp_rialto::Rialto;
 }
 
+// bear
+// 新增加 pallet, pallet_shift_session_manager
 impl pallet_shift_session_manager::Trait for Runtime {}
 
 parameter_types! {
@@ -330,6 +337,8 @@ parameter_types! {
 		bp_millau::MAX_MESSAGES_IN_DELIVERY_TRANSACTION;
 }
 
+// bear
+// pallet 新增， pallet_message_lane
 impl pallet_message_lane::Trait for Runtime {
 	type Event = Event;
 	type MaxMessagesToPruneAtOnce = MaxMessagesToPruneAtOnce;
