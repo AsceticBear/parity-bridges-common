@@ -38,6 +38,7 @@ use std::ops::RangeInclusive;
 const SUB_API_GRANDPA_AUTHORITIES: &str = "GrandpaApi_grandpa_authorities";
 
 /// Opaque justifications subscription type.
+// bear - 订阅 justification 的一个客户端 
 pub type JustificationsSubscription = Subscription<Bytes>;
 
 /// Opaque GRANDPA authorities set.

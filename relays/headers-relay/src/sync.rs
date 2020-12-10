@@ -54,7 +54,7 @@ pub enum TargetTransactionMode {
 }
 
 /// Headers synchronization context.
-// bear - headers 同步的上下文 
+// bear - headers 同步的上下文
 #[derive(Debug)]
 pub struct HeadersSync<P: HeadersSyncPipeline> {
 	/// Synchronization parameters.

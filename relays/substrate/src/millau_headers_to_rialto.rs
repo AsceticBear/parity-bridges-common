@@ -83,7 +83,7 @@ pub async fn run(
 	rialto_sign: RialtoSigningParams,
 	metrics_params: Option<relay_utils::metrics::MetricsParams>,
 ) {
-	// 从 main cli 中调用过来，前往 headers_pipline.rs
+	// 从 main cli 中调用过来，前往 headers_pipline.rs, MillauHeadersToRialto 作为 pipeline
 	crate::headers_pipeline::run(
 		MillauHeadersToRialto::new(rialto_client.clone(), rialto_sign),
 		millau_client,

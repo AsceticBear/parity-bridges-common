@@ -130,7 +130,7 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 	exit_signal: impl Future<Output = ()>,
 ) {
 	#![allow(unused_variables)] // this is to suppress weird errors from clippy
-	
+
 	let mut local_pool = futures::executor::LocalPool::new();
 	let mut progress_context = (Instant::now(), None, None);
 
@@ -604,7 +604,7 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 }
 
 /// Print synchronization progress.
-// bear - 打印出同步过程 
+// bear - 打印出同步过程
 fn print_sync_progress<P: HeadersSyncPipeline>(
 	progress_context: (Instant, Option<P::Number>, Option<P::Number>),
 	eth_sync: &HeadersSync<P>,

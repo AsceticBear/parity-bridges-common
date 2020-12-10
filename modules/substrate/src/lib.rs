@@ -221,10 +221,10 @@ decl_module! {
 		/// This function is only allowed to be called from a trusted origin and writes to storage
 		/// with practically no checks in terms of the validity of the data. It is important that
 		/// you ensure that valid data is being passed in.
-		
+
 		// bear - 从 relay call 过来的
 		// 1. 校验各种权限
-		// 2. 
+		// 2.
 		//TODO: Update weights [#78]
 		#[weight = 0]
 		pub fn initialize(
@@ -407,13 +407,12 @@ fn initialize_bridge<T: Trait>(init_params: InitializationData<BridgedHeader<T>>
 	<BestHeaders<T>>::put(vec![initial_hash]);
 	<BestFinalized<T>>::put(initial_hash);
 
-
 	// 更新 authority set
 	let authority_set = AuthoritySet::new(authority_list, set_id);
 	CurrentAuthoritySet::put(authority_set);
 
 	<ImportedHeaders<T>>::insert(
-	// 更新 imported Headers
+		// 更新 imported Headers
 		initial_hash,
 		ImportedHeader {
 			header,

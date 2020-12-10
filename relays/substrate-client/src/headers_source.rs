@@ -60,6 +60,7 @@ where
 	}
 
 	async fn header_by_hash(&self, hash: P::Hash) -> Result<P::Header, Self::Error> {
+		log::info!(target: "bridge", "bear(header_by_hash) - hash {:?}", hash);
 		self.client
 			.header_by_hash(hash)
 			.await
@@ -68,6 +69,7 @@ where
 	}
 
 	async fn header_by_number(&self, number: P::Number) -> Result<P::Header, Self::Error> {
+		log::info!(target: "bridge", "bear(header_by_number) - hash {:?}", number);
 		self.client
 			.header_by_number(number)
 			.await
@@ -75,6 +77,7 @@ where
 			.map_err(Into::into)
 	}
 
+	// bear - 根据 header id 获取到 grandpa justification
 	async fn header_completion(
 		&self,
 		id: HeaderIdOf<P>,
@@ -83,9 +86,12 @@ where
 		let signed_block = self.client.get_block(Some(hash)).await?;
 		let grandpa_justification = signed_block.justification().cloned();
 
+		log::info!(target: "bridge", "bear(header_completion) - hash {:?}, signed_block {:?} grandpa justification {:?}", hash, signed_block, grandpa_justification);
+
 		Ok((id, grandpa_justification))
 	}
 
+	// bear - header extra 基本上就是空了
 	async fn header_extra(
 		&self,
 		id: HeaderIdOf<P>,
