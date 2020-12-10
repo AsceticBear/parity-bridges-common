@@ -164,6 +164,8 @@ decl_module! {
 		/// This will perform some basic checks to make sure it is fine to
 		/// import into the runtime. However, it does not perform any checks
 		/// related to finality.
+		// bear - 插入一个 signed header
+		// 1. 先校验签名等，然后插入到存储中
 		// TODO: Update weights [#78]
 		#[weight = 0]
 		pub fn import_signed_header(
@@ -172,7 +174,7 @@ decl_module! {
 		) -> DispatchResult {
 			ensure_operational::<T>()?;
 			let _ = ensure_signed(origin)?;
-			frame_support::debug::trace!("Got header {:?}", header);
+			frame_support::debug::info!("Got header {:?}", header);
 
 			let mut verifier = verifier::Verifier {
 				storage: PalletStorage::<T>::new(),
@@ -199,7 +201,7 @@ decl_module! {
 		) -> DispatchResult {
 			ensure_operational::<T>()?;
 			let _ = ensure_signed(origin)?;
-			frame_support::debug::trace!("Got header hash {:?}", hash);
+			frame_support::debug::info!("Got header hash {:?}", hash);
 
 			let mut verifier = verifier::Verifier {
 				storage: PalletStorage::<T>::new(),

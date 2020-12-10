@@ -56,6 +56,7 @@ impl SubstrateHeadersSyncPipeline for MillauHeadersToRialto {
 		let account_id = self.target_sign.signer.public().as_array_ref().clone().into();
 		let nonce = self.target_client.next_account_index(account_id).await?;
 		// 这里来自于 Runtime 中的 Call
+		log::info!(target: "bridge", "bear(make_submit_header_transaction) - call");
 		let call = BridgeMillauCall::import_signed_header(header.header().clone().into_inner()).into();
 		let transaction = Rialto::sign_transaction(&self.target_client, &self.target_sign.signer, nonce, call);
 		Ok(transaction)
@@ -70,6 +71,7 @@ impl SubstrateHeadersSyncPipeline for MillauHeadersToRialto {
 		let account_id = self.target_sign.signer.public().as_array_ref().clone().into();
 		let nonce = self.target_client.next_account_index(account_id).await?;
 		// 同样这里，来自于 runtime 中的 Call
+		log::info!(target: "bridge", "bear(make_complete_header_transaction) - call");
 		let call = BridgeMillauCall::finalize_header(id.1, completion).into();
 		let transaction = Rialto::sign_transaction(&self.target_client, &self.target_sign.signer, nonce, call);
 		Ok(transaction)

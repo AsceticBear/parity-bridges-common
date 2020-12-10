@@ -112,28 +112,34 @@ where
 	///
 	/// Will perform some basic checks to make sure that this header doesn't break any assumptions
 	/// such as being on a different finalized fork.
+	// bear - 对 Runtime 中传入的 header 进行校验，并插入到 pallet 的存储里
 	pub fn import_header(&mut self, header: H) -> Result<(), ImportError> {
 		let hash = header.hash();
 		let best_finalized = self.storage.best_finalized_header();
 
+		// 1. 和当前 pallet 里的存储高度比较
 		if header.number() <= best_finalized.number() {
 			return Err(ImportError::OldHeader);
 		}
 
+		// 2. 当前 storage 是否存的有
 		if self.storage.header_exists(hash) {
 			return Err(ImportError::HeaderAlreadyExists);
 		}
 
+		// 3. 这一点很重要，要能在 storage 中查找到 parent
 		let parent_header = self
 			.storage
 			.header_by_hash(*header.parent_hash())
 			.ok_or(ImportError::MissingParent)?;
 
+		// 4. 这个校验感觉意义不大
 		let parent_number = *parent_header.number();
 		if parent_number + One::one() != *header.number() {
 			return Err(ImportError::InvalidChildNumber);
 		}
 
+		// 5. 这段话很重要！！！！
 		// A header requires a justification if it enacts an authority set change. We don't
 		// need to act on it right away (we'll update the set once the header gets finalized), but
 		// we need to make a note of it.
@@ -141,7 +147,9 @@ where
 		// Note: This assumes that we can only have one authority set change pending per fork at a
 		// time. While this is not strictly true of Grandpa (it can have multiple pending changes,
 		// even across forks), this assumption simplifies our tracking of authority set changes.
+
 		let mut signal_hash = parent_header.signal_hash;
+		frame_support::debug::info!("bear(import_header) signal_hash {:?}", signal_hash);
 		let scheduled_change = find_scheduled_change(&header);
 
 		// Check if our fork is expecting an authority set change
@@ -216,8 +224,10 @@ where
 	/// Verify that a previously imported header can be finalized with the given Grandpa finality
 	/// proof. If the header enacts an authority set change the change will be applied once the
 	/// header has been finalized.
+	// bear - 至关重要的一个地方
 	pub fn import_finality_proof(&mut self, hash: H::Hash, proof: FinalityProof) -> Result<(), FinalizationError> {
 		// Make sure that we've previously imported this header
+		// 1. 确保 pallet 存储里已经包括这个区块了
 		let header = self
 			.storage
 			.header_by_hash(hash)
@@ -225,16 +235,20 @@ where
 
 		// We don't want to finalize an ancestor of an already finalized
 		// header, this would be inconsistent
+		// 2. 入参 hash 对应的 block number 必须要大于 storage 中存储的 best finalized header number
 		let last_finalized = self.storage.best_finalized_header();
 		if header.number() <= last_finalized.number() {
 			return Err(FinalizationError::OldHeader);
 		}
 
+		// 3. 取出当前的 authority set list 集合
 		let current_authority_set = self.storage.current_authority_set();
 		let voter_set = VoterSet::new(current_authority_set.authorities).expect(
 			"We verified the correctness of the authority list during header import,
 			before writing them to storage. This must always be valid.",
 		);
+
+		// 4. 验证 justification 的正确性，不需要区块的历史信息
 		verify_justification::<H>(
 			(hash, *header.number()),
 			current_authority_set.set_id,
@@ -242,10 +256,11 @@ where
 			&proof.0,
 		)
 		.map_err(|_| FinalizationError::InvalidJustification)?;
-		frame_support::debug::trace!(target: "sub-bridge", "Received valid justification for {:?}", header);
+		frame_support::debug::info!(target: "sub-bridge", "Received valid justification for {:?}", header);
 
-		frame_support::debug::trace!(target: "sub-bridge", "Checking ancestry for headers between {:?} and {:?}", last_finalized, header);
+		frame_support::debug::info!(target: "sub-bridge", "Checking ancestry for headers between {:?} and {:?}", last_finalized, header);
 		let mut finalized_headers =
+			// 找到当前 header 和历史 last finalized 区块之间的区块 
 			if let Some(ancestors) = headers_between(&self.storage, last_finalized, header.clone()) {
 				// Since we only try and finalize headers with a height strictly greater
 				// than `best_finalized` if `headers_between` returns Some we must have
@@ -263,6 +278,7 @@ where
 				//
 				// We do this because it is important to to import justifications _in order_,
 				// otherwise we risk finalizing headers on competing chains.
+				// 检查所有的祖宗块，是否有 requires_justification 标识，如果有的话，就不行。
 				let requires_justification = ancestors.iter().skip(1).find(|h| h.requires_justification);
 				if requires_justification.is_some() {
 					return Err(FinalizationError::PrematureJustification);
@@ -292,6 +308,7 @@ where
 				.expect(ENACT_SET_PROOF);
 		}
 
+		// 在这里会设置 is_finalized 标识为 true
 		for header in finalized_headers.iter_mut() {
 			header.is_finalized = true;
 			header.requires_justification = false;
@@ -299,6 +316,7 @@ where
 			self.storage.write_header(header);
 		}
 
+		// 更新 best finalize block 的情况
 		self.storage.update_best_finalized(hash);
 
 		Ok(())
@@ -336,6 +354,7 @@ where
 }
 
 fn find_scheduled_change<H: HeaderT>(header: &H) -> Option<sp_finality_grandpa::ScheduledChange<H::Number>> {
+	frame_support::debug::info!("bear(find_scheduled_change) - here");
 	let id = OpaqueDigestItemId::Consensus(&GRANDPA_ENGINE_ID);
 
 	let filter_log = |log: ConsensusLog<H::Number>| match log {

@@ -93,7 +93,7 @@ where
 {
 	// bear - maintain
 	// 原理： 这个程序好像是单开用来提供 justifactions 的
-	// 
+	//
 	async fn maintain(&self, sync: &mut HeadersSync<P>) {
 		log::info!(target: "bridge", "bear - start maintain process");
 		// 1. 拿到 justifications
@@ -283,7 +283,6 @@ where
 	P::Hash: Decode,
 	C: Chain,
 {
-
 	let call = P::FINALIZED_BLOCK_METHOD.into();
 	let data = Bytes(Vec::new());
 
