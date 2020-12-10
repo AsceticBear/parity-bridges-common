@@ -219,7 +219,6 @@ pub(crate) mod tests {
 		}
 	}
 
-	
 	pub(crate) fn make_justification_for_header(
 		header: &TestHeader,
 		round: u64,

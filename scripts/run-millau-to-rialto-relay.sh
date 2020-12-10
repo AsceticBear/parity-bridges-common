@@ -24,7 +24,7 @@
 # bear
 
 # compile
-# cargo build -p substrate-relay
+cargo build -p substrate-relay
 
 # run
 ./target/debug/substrate-relay initialize-millau-headers-bridge-in-rialto \

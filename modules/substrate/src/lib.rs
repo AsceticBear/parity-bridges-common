@@ -221,6 +221,10 @@ decl_module! {
 		/// This function is only allowed to be called from a trusted origin and writes to storage
 		/// with practically no checks in terms of the validity of the data. It is important that
 		/// you ensure that valid data is being passed in.
+		
+		// bear - 从 relay call 过来的
+		// 1. 校验各种权限
+		// 2. 
 		//TODO: Update weights [#78]
 		#[weight = 0]
 		pub fn initialize(
@@ -373,6 +377,7 @@ fn ensure_operational<T: Trait>() -> Result<(), Error<T>> {
 /// Since this writes to storage with no real checks this should only be used in functions that were
 /// called by a trusted origin.
 fn initialize_bridge<T: Trait>(init_params: InitializationData<BridgedHeader<T>>) {
+	// 1. 解析出数据
 	let InitializationData {
 		header,
 		authority_list,
@@ -381,8 +386,10 @@ fn initialize_bridge<T: Trait>(init_params: InitializationData<BridgedHeader<T>>
 		is_halted,
 	} = init_params;
 
+	// 2. 初始化 hash
 	let initial_hash = header.hash();
 
+	// TODO: 啥时候用
 	let mut signal_hash = None;
 	if let Some(ref change) = scheduled_change {
 		assert!(
@@ -394,14 +401,19 @@ fn initialize_bridge<T: Trait>(init_params: InitializationData<BridgedHeader<T>>
 		<NextScheduledChange<T>>::insert(initial_hash, change);
 	};
 
+	// 更新存储
 	<BestHeight<T>>::put(header.number());
+	// 注意这里是个数组形式
 	<BestHeaders<T>>::put(vec![initial_hash]);
 	<BestFinalized<T>>::put(initial_hash);
 
+
+	// 更新 authority set
 	let authority_set = AuthoritySet::new(authority_list, set_id);
 	CurrentAuthoritySet::put(authority_set);
 
 	<ImportedHeaders<T>>::insert(
+	// 更新 imported Headers
 		initial_hash,
 		ImportedHeader {
 			header,

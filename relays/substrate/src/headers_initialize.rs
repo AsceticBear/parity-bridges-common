@@ -28,6 +28,7 @@ use sp_core::Bytes;
 use sp_finality_grandpa::{AuthorityList as GrandpaAuthoritiesSet, SetId as GrandpaAuthoritiesSetId};
 
 /// Submit headers-bridge initialization transaction.
+// bear - initialize() 在两条链之间搭建起来一座桥，从 main cli 调用过来
 pub async fn initialize<SourceChain: Chain, TargetChain: Chain>(
 	source_client: Client<SourceChain>,
 	target_client: Client<TargetChain>,
@@ -65,6 +66,9 @@ pub async fn initialize<SourceChain: Chain, TargetChain: Chain>(
 }
 
 /// Craft and submit initialization transaction, returning any error that may occur.
+// bear - 初始化桥的具体操作
+// 1. 准备初始化的材料
+// 2. 然后构造交易，回调函数发送到 target chain, 拿到对应的 hash 就行
 async fn do_initialize<SourceChain: Chain, TargetChain: Chain>(
 	source_client: Client<SourceChain>,
 	target_client: Client<TargetChain>,
@@ -73,6 +77,7 @@ async fn do_initialize<SourceChain: Chain, TargetChain: Chain>(
 	initial_authorities_set_id: Option<GrandpaAuthoritiesSetId>,
 	prepare_initialize_transaction: impl FnOnce(InitializationData<SourceChain::Header>) -> Result<Bytes, String>,
 ) -> Result<TargetChain::Hash, String> {
+	// 1
 	let initialization_data = prepare_initialization_data(
 		source_client,
 		raw_initial_header,
@@ -80,6 +85,8 @@ async fn do_initialize<SourceChain: Chain, TargetChain: Chain>(
 		initial_authorities_set_id,
 	)
 	.await?;
+
+	// 2
 	let initialization_tx = prepare_initialize_transaction(initialization_data)?;
 	let initialization_tx_hash = target_client
 		.submit_extrinsic(initialization_tx)
@@ -89,14 +96,17 @@ async fn do_initialize<SourceChain: Chain, TargetChain: Chain>(
 }
 
 /// Prepare initialization data for the headers-bridge pallet.
+// bear - 构造材料
 async fn prepare_initialization_data<SourceChain: Chain>(
 	source_client: Client<SourceChain>,
 	raw_initial_header: Option<Bytes>,
 	raw_initial_authorities_set: Option<Bytes>,
 	initial_authorities_set_id: Option<GrandpaAuthoritiesSetId>,
 ) -> Result<InitializationData<SourceChain::Header>, String> {
-	let source_genesis_hash = *source_client.genesis_hash();
+	log::info!(target: "bridge","bear - init header {:?}, init authority set {:?}, set_id {:?}", raw_initial_header, raw_initial_authorities_set, initial_authorities_set_id);
 
+	// 如果 raw initial header 为空，就取 source chain 创世块（根据 hash）
+	let source_genesis_hash = *source_client.genesis_hash();
 	let initial_header = match raw_initial_header {
 		Some(raw_initial_header) => SourceChain::Header::decode(&mut &raw_initial_header.0[..])
 			.map_err(|err| format!("Failed to decode {} initial header: {:?}", SourceChain::NAME, err))?,
@@ -106,6 +116,7 @@ async fn prepare_initialization_data<SourceChain: Chain>(
 			.map_err(|err| format!("Failed to retrive {} genesis header: {:?}", SourceChain::NAME, err))?,
 	};
 
+	// 如果 raw initial authorities set 为空，取创世块的 authorities set
 	let raw_initial_authorities_set = match raw_initial_authorities_set {
 		Some(raw_initial_authorities_set) => raw_initial_authorities_set.0,
 		None => source_client
@@ -127,6 +138,7 @@ async fn prepare_initialization_data<SourceChain: Chain>(
 				err
 			)
 		})?;
+	log::info!(target: "bridge","bear - init header {:?}, init authority set {:?}, set_id {:?}", header, initial_authorities_set, initial_authorities_set_id);
 
 	Ok(InitializationData {
 		header: initial_header,
