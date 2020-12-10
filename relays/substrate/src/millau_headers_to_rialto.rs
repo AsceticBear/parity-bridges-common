@@ -48,17 +48,20 @@ impl SubstrateHeadersSyncPipeline for MillauHeadersToRialto {
 
 	type SignedTransaction = <Rialto as TransactionSignScheme>::SignedTransaction;
 
+	// 构造 submit header 的 tx
 	async fn make_submit_header_transaction(
 		&self,
 		header: QueuedMillauHeader,
 	) -> Result<Self::SignedTransaction, SubstrateError> {
 		let account_id = self.target_sign.signer.public().as_array_ref().clone().into();
 		let nonce = self.target_client.next_account_index(account_id).await?;
+		// 这里来自于 Runtime 中的 Call
 		let call = BridgeMillauCall::import_signed_header(header.header().clone().into_inner()).into();
 		let transaction = Rialto::sign_transaction(&self.target_client, &self.target_sign.signer, nonce, call);
 		Ok(transaction)
 	}
 
+	// 构造 finalize header 的 tx
 	async fn make_complete_header_transaction(
 		&self,
 		id: MillauHeaderId,
@@ -66,6 +69,7 @@ impl SubstrateHeadersSyncPipeline for MillauHeadersToRialto {
 	) -> Result<Self::SignedTransaction, SubstrateError> {
 		let account_id = self.target_sign.signer.public().as_array_ref().clone().into();
 		let nonce = self.target_client.next_account_index(account_id).await?;
+		// 同样这里，来自于 runtime 中的 Call
 		let call = BridgeMillauCall::finalize_header(id.1, completion).into();
 		let transaction = Rialto::sign_transaction(&self.target_client, &self.target_sign.signer, nonce, call);
 		Ok(transaction)
@@ -79,6 +83,7 @@ pub async fn run(
 	rialto_sign: RialtoSigningParams,
 	metrics_params: Option<relay_utils::metrics::MetricsParams>,
 ) {
+	// 从 main cli 中调用过来，前往 headers_pipline.rs
 	crate::headers_pipeline::run(
 		MillauHeadersToRialto::new(rialto_client.clone(), rialto_sign),
 		millau_client,

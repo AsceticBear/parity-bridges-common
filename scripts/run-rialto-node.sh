@@ -15,7 +15,7 @@
 
 # run
 RUST_LOG=runtime=trace,rpc=debug \
-    ./target/debug/rialto-bridge-node  \
+    ./target/release/rialto-bridge-node  \
         --dev --tmp \
         --port 30334 \
         --ws-port 9946 \

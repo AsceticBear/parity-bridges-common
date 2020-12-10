@@ -117,7 +117,7 @@ where
 			}
 		};
 
-		log::debug!(
+		log::info!(
 			target: "bridge",
 			"Read best finalized {} block from {}: {:?}",
 			P::SOURCE_NAME,
@@ -148,7 +148,7 @@ where
 				.await;
 
 			match submit_result {
-				Ok(_) => log::debug!(
+				Ok(_) => log::info!(
 					target: "bridge",
 					"Submitted justification received over {} subscription. Target: {:?}",
 					P::SOURCE_NAME,
@@ -204,7 +204,7 @@ where
 				}
 			};
 
-			log::debug!(
+			log::info!(
 				target: "bridge",
 				"Received {} justification over subscription. Target: {:?}",
 				P::SOURCE_NAME,

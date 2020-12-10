@@ -25,6 +25,7 @@ use std::time::Duration;
 pub const MAX_BACKOFF_INTERVAL: Duration = Duration::from_secs(60);
 /// Delay after connection-related error happened before we'll try
 /// reconnection again.
+// bear - 重连 10s
 pub const CONNECTION_ERROR_DELAY: Duration = Duration::from_secs(10);
 
 pub mod initialize;
@@ -98,6 +99,7 @@ macro_rules! bail_on_arg_error {
 }
 
 /// Ethereum header Id.
+// bear - header id 包括 hash, number
 #[derive(Debug, Default, Clone, Copy, Eq, Hash, PartialEq)]
 pub struct HeaderId<Hash, Number>(pub Number, pub Hash);
 
@@ -227,6 +229,7 @@ impl ProcessFutureResult {
 }
 
 /// Process result of the future from a client.
+// bear - 处理同步过程中 future 的结果
 pub fn process_future_result<TResult, TError, TGoOfflineFuture>(
 	result: Result<TResult, TError>,
 	retry_backoff: &mut ExponentialBackoff,

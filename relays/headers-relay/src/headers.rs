@@ -38,6 +38,7 @@ type KnownHeaders<P> =
 	BTreeMap<<P as HeadersSyncPipeline>::Number, HashMap<<P as HeadersSyncPipeline>::Hash, HeaderStatus>>;
 
 /// We're trying to fetch completion data for single header at this interval.
+// ？ 怎么用的
 const RETRY_FETCH_COMPLETION_INTERVAL: Duration = Duration::from_secs(20);
 
 /// Headers queue.
@@ -228,7 +229,7 @@ impl<P: HeadersSyncPipeline> QueuedHeaders<P> {
 		let id = header.id();
 		let status = self.status(&id);
 		if status != HeaderStatus::Unknown {
-			log::debug!(
+			log::info!(
 				target: "bridge",
 				"Ignoring new {} header: {:?}. Status is {:?}.",
 				P::SOURCE_NAME,
@@ -239,7 +240,7 @@ impl<P: HeadersSyncPipeline> QueuedHeaders<P> {
 		}
 
 		if id.0 < self.prune_border {
-			log::debug!(
+			log::info!(
 				target: "bridge",
 				"Ignoring ancient new {} header: {:?}.",
 				P::SOURCE_NAME,
@@ -273,7 +274,7 @@ impl<P: HeadersSyncPipeline> QueuedHeaders<P> {
 		};
 
 		self.known_headers.entry(id.0).or_default().insert(id.1, status);
-		log::debug!(
+		log::info!(
 			target: "bridge",
 			"Queueing new {} header: {:?}. Queue: {:?}.",
 			P::SOURCE_NAME,
@@ -353,7 +354,7 @@ impl<P: HeadersSyncPipeline> QueuedHeaders<P> {
 		let completion = match completion {
 			Some(completion) => completion,
 			None => {
-				log::debug!(
+				log::info!(
 					target: "bridge",
 					"{} Node is still missing completion data for header: {:?}. Will retry later.",
 					P::SOURCE_NAME,
@@ -369,7 +370,7 @@ impl<P: HeadersSyncPipeline> QueuedHeaders<P> {
 		// this could lead to duplicate completion retrieval (if completion transaction isn't mined
 		// for too long)
 		if self.incomplete_headers.get(id).is_some() {
-			log::debug!(
+			log::info!(
 				target: "bridge",
 				"Received completion data from {} for header: {:?}",
 				P::SOURCE_NAME,
@@ -381,6 +382,7 @@ impl<P: HeadersSyncPipeline> QueuedHeaders<P> {
 	}
 
 	/// When header is submitted to target node.
+	// bear - 把 headers 提交到 target chain, 好像是直接通过 channel 发送到目标 channel
 	pub fn headers_submitted(&mut self, ids: Vec<HeaderIdOf<P>>) {
 		for id in ids {
 			move_header(
@@ -397,7 +399,7 @@ impl<P: HeadersSyncPipeline> QueuedHeaders<P> {
 	/// When header completion data is sent to target node.
 	pub fn header_completed(&mut self, id: &HeaderIdOf<P>) {
 		if self.completion_data.remove(id).is_some() {
-			log::debug!(
+			log::info!(
 				target: "bridge",
 				"Sent completion data to {} for header: {:?}",
 				P::TARGET_NAME,
@@ -438,7 +440,7 @@ impl<P: HeadersSyncPipeline> QueuedHeaders<P> {
 			}
 
 			if make_header_incomplete {
-				log::debug!(
+				log::info!(
 					target: "bridge",
 					"Scheduling completion data retrieval for header: {:?}",
 					new_incomplete_header,
@@ -485,7 +487,7 @@ impl<P: HeadersSyncPipeline> QueuedHeaders<P> {
 				);
 			}
 
-			log::debug!(
+			log::info!(
 				target: "bridge",
 				"Completion data is no longer required for header: {:?}",
 				just_completed_header,
@@ -584,6 +586,7 @@ impl<P: HeadersSyncPipeline> QueuedHeaders<P> {
 	}
 
 	/// When we receive new Synced header from target node.
+	// 重点关注
 	fn header_synced(&mut self, id: &HeaderIdOf<P>) {
 		// update best synced block number
 		self.best_synced_number = std::cmp::max(self.best_synced_number, id.0);
@@ -826,7 +829,7 @@ fn prune_known_headers<P: HeadersSyncPipeline>(known_headers: &mut KnownHeaders<
 	let new_known_headers = known_headers.split_off(&prune_border);
 	for (pruned_number, pruned_headers) in &*known_headers {
 		for pruned_hash in pruned_headers.keys() {
-			log::debug!(target: "bridge", "Pruning header {:?}.", HeaderId(*pruned_number, *pruned_hash));
+			log::info!(target: "bridge", "Pruning header {:?}.", HeaderId(*pruned_number, *pruned_hash));
 		}
 	}
 	*known_headers = new_known_headers;
@@ -838,7 +841,7 @@ fn set_header_status<P: HeadersSyncPipeline>(
 	id: &HeaderIdOf<P>,
 	status: HeaderStatus,
 ) {
-	log::debug!(
+	log::info!(
 		target: "bridge",
 		"{} header {:?} is now {:?}",
 		P::SOURCE_NAME,

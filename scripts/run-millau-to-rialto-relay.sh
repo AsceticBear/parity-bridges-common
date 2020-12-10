@@ -24,10 +24,10 @@
 # bear
 
 # compile
-cargo build -p substrate-relay
+# cargo build -p substrate-relay
 
 # run
-./target/debug/substrate-relay initialize-millau-headers-bridge-in-rialto \
+./target/release/substrate-relay initialize-millau-headers-bridge-in-rialto \
     --millau-host 127.0.0.1 \
     --millau-port 9945 \
     --rialto-host 127.0.0.1 \
@@ -37,7 +37,7 @@ cargo build -p substrate-relay
 sleep 6
 
 RUST_LOG=substrate-relay=debug \
-    ./target/debug/substrate-relay millau-headers-to-rialto \
+    ./target/release/substrate-relay millau-headers-to-rialto \
 	--millau-host 127.0.0.1 \
 	--millau-port 9945 \
 	--rialto-host 127.0.0.1 \

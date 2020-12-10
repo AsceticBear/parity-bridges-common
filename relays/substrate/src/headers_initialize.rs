@@ -138,7 +138,7 @@ async fn prepare_initialization_data<SourceChain: Chain>(
 				err
 			)
 		})?;
-	log::info!(target: "bridge","bear - init header {:?}, init authority set {:?}, set_id {:?}", header, initial_authorities_set, initial_authorities_set_id);
+	log::info!(target: "bridge","bear - init header {:?}, init authority set {:?}, set_id {:?}", initial_header, initial_authorities_set, initial_authorities_set_id);
 
 	Ok(InitializationData {
 		header: initial_header,

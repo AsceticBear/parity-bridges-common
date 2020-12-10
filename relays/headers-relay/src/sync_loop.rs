@@ -115,10 +115,13 @@ pub trait SyncMaintain<P: HeadersSyncPipeline>: Send + Sync {
 impl<P: HeadersSyncPipeline> SyncMaintain<P> for () {}
 
 /// Run headers synchronization.
+// header 同步逻辑
 #[allow(clippy::too_many_arguments)]
 pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
+	// bear - 这里是一个简单的客户端
 	source_client: impl SourceClient<P>,
 	source_tick: Duration,
+	// bear - target client 这里是一个 pipeline
 	target_client: TC,
 	target_tick: Duration,
 	sync_maintain: impl SyncMaintain<P>,
@@ -127,14 +130,19 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 	exit_signal: impl Future<Output = ()>,
 ) {
 	#![allow(unused_variables)] // this is to suppress weird errors from clippy
+	
 	let mut local_pool = futures::executor::LocalPool::new();
 	let mut progress_context = (Instant::now(), None, None);
 
 	local_pool.run_until(async move {
+		// sync 代表同步 header 的上下文
 		let mut sync = HeadersSync::<P>::new(sync_params);
+		// ？
 		let mut stall_countdown = None;
+		// ？
 		let mut last_update_time = Instant::now();
 
+		// 监控显示的需要
 		let mut metrics_global = GlobalMetrics::default();
 		let mut metrics_sync = SyncLoopMetrics::default();
 		let metrics_enabled = metrics_params.is_some();
@@ -145,9 +153,13 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 			&metrics_sync,
 		);
 
+		// retry 时候的时间设置
 		let mut source_retry_backoff = retry_backoff();
+		// ？
 		let mut source_client_is_online = false;
+		// ？
 		let mut source_best_block_number_required = false;
+		// 获取 source chain 的 best block number， 一堆 futures
 		let source_best_block_number_future = source_client.best_block_number().fuse();
 		let source_new_header_future = futures::future::Fuse::terminated();
 		let source_orphan_header_future = futures::future::Fuse::terminated();
@@ -156,6 +168,7 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 		let source_go_offline_future = futures::future::Fuse::terminated();
 		let source_tick_stream = interval(source_tick).fuse();
 
+		// 反向操作一波
 		let mut target_retry_backoff = retry_backoff();
 		let mut target_client_is_online = false;
 		let mut target_best_block_required = false;
@@ -198,7 +211,6 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 			futures::select! {
 				source_best_block_number = source_best_block_number_future => {
 					source_best_block_number_required = false;
-
 					source_client_is_online = process_future_result(
 						source_best_block_number,
 						&mut source_retry_backoff,
@@ -212,6 +224,7 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 					source_client_is_online = process_future_result(
 						source_new_header,
 						&mut source_retry_backoff,
+						// 把 header 拿到，然后丢到 queue 排队
 						|source_new_header| sync.headers_mut().header_response(source_new_header),
 						&mut source_go_offline_future,
 						async_std::task::sleep,
@@ -323,10 +336,12 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 						|| format!("Error retrieving existence status from {} node", P::TARGET_NAME),
 					).is_ok();
 				},
+				// bear - 提交 headers
 				submitted_headers = target_submit_header_future => {
 					// following line helps Rust understand the type of `submitted_headers` :/
 					let submitted_headers: SubmittedHeaders<HeaderIdOf<P>, TC::Error> = submitted_headers;
 					let submitted_headers_str = format!("{}", submitted_headers);
+
 					let all_headers_rejected = submitted_headers.submitted.is_empty()
 						&& submitted_headers.incomplete.is_empty();
 					let has_submitted_headers = sync.headers().headers_in_status(HeaderStatus::Submitted) != 0;
@@ -351,7 +366,7 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 						|| format!("Error submitting headers to {} node", P::TARGET_NAME),
 					).is_ok();
 
-					log::debug!(target: "bridge", "Header submit result: {}", submitted_headers_str);
+					log::info!(target: "bridge", "Header submit result: {}", submitted_headers_str);
 
 					sync.headers_mut().headers_submitted(submitted_headers.submitted);
 					sync.headers_mut().add_incomplete_headers(false, submitted_headers.incomplete);
@@ -410,8 +425,9 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 			progress_context = print_sync_progress(progress_context, &sync);
 
 			// run maintain procedures
+			// 这里是为什么
 			if maintain_required && source_client_is_online && target_client_is_online {
-				log::debug!(target: "bridge", "Maintaining headers sync loop");
+				log::info!(target: "bridge", "Maintaining headers sync loop");
 				maintain_required = false;
 				sync_maintain.maintain(&mut sync).await;
 			}
@@ -447,13 +463,13 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 				// 6. Submit header
 
 				if target_best_block_required {
-					log::debug!(target: "bridge", "Asking {} about best block", P::TARGET_NAME);
+					log::info!(target: "bridge", "Asking {} about best block", P::TARGET_NAME);
 					target_best_block_future.set(target_client.best_header_id().fuse());
 				} else if target_incomplete_headers_required {
-					log::debug!(target: "bridge", "Asking {} about incomplete headers", P::TARGET_NAME);
+					log::info!(target: "bridge", "Asking {} about incomplete headers", P::TARGET_NAME);
 					target_incomplete_headers_future.set(target_client.incomplete_headers_ids().fuse());
 				} else if let Some((id, completion)) = sync.headers_mut().header_to_complete() {
-					log::debug!(
+					log::info!(
 						target: "bridge",
 						"Going to complete header: {:?}",
 						id,
@@ -461,7 +477,7 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 
 					target_complete_header_future.set(target_client.complete_header(id, completion.clone()).fuse());
 				} else if let Some(header) = sync.headers().header(HeaderStatus::MaybeExtra) {
-					log::debug!(
+					log::info!(
 						target: "bridge",
 						"Checking if header submission requires extra: {:?}",
 						header.id(),
@@ -472,7 +488,7 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 					// for MaybeOrphan we actually ask for parent' header existence
 					let parent_id = header.parent_id();
 
-					log::debug!(
+					log::info!(
 						target: "bridge",
 						"Asking {} node for existence of: {:?}",
 						P::TARGET_NAME,
@@ -483,7 +499,7 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 				} else if let Some(headers) =
 					sync.select_headers_to_submit(last_update_time.elapsed() > BACKUP_STALL_SYNC_TIMEOUT)
 				{
-					log::debug!(
+					log::info!(
 						target: "bridge",
 						"Submitting {} header(s) to {} node: {:?}",
 						headers.len(),
@@ -530,10 +546,10 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 				// 5. Downloading new headers
 
 				if source_best_block_number_required {
-					log::debug!(target: "bridge", "Asking {} node about best block number", P::SOURCE_NAME);
+					log::info!(target: "bridge", "Asking {} node about best block number", P::SOURCE_NAME);
 					source_best_block_number_future.set(source_client.best_block_number().fuse());
 				} else if let Some(id) = sync.headers_mut().incomplete_header() {
-					log::debug!(
+					log::info!(
 						target: "bridge",
 						"Retrieving completion data for header: {:?}",
 						id,
@@ -541,7 +557,7 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 					source_completion_future.set(source_client.header_completion(id).fuse());
 				} else if let Some(header) = sync.headers().header(HeaderStatus::Extra) {
 					let id = header.id();
-					log::debug!(
+					log::info!(
 						target: "bridge",
 						"Retrieving extra data for header: {:?}",
 						id,
@@ -562,7 +578,7 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 						return;
 					}
 
-					log::debug!(
+					log::info!(
 						target: "bridge",
 						"Going to download orphan header from {} node: {:?}",
 						P::SOURCE_NAME,
@@ -571,7 +587,7 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 
 					source_orphan_header_future.set(source_client.header_by_hash(parent_id.1).fuse());
 				} else if let Some(id) = sync.select_new_header_to_download() {
-					log::debug!(
+					log::info!(
 						target: "bridge",
 						"Going to download new header from {} node: {:?}",
 						P::SOURCE_NAME,
@@ -588,6 +604,7 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 }
 
 /// Print synchronization progress.
+// bear - 打印出同步过程 
 fn print_sync_progress<P: HeadersSyncPipeline>(
 	progress_context: (Instant, Option<P::Number>, Option<P::Number>),
 	eth_sync: &HeadersSync<P>,

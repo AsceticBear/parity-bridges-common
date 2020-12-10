@@ -121,12 +121,14 @@ async fn run_command(command: cli::Command) -> Result<(), String> {
 			)
 			.await;
 		}
+		// bear - relay millau header 到 rialto
 		cli::Command::MillauHeadersToRialto {
 			millau,
 			rialto,
 			rialto_sign,
 			prometheus_params,
 		} => {
+			// 1. 获取到连接的参数，构造出连接 client 对象
 			let millau_client = MillauClient::new(ConnectionParams {
 				host: millau.millau_host,
 				port: millau.millau_port,
@@ -137,11 +139,13 @@ async fn run_command(command: cli::Command) -> Result<(), String> {
 				port: rialto.rialto_port,
 			})
 			.await?;
+
 			let rialto_sign = RialtoSigningParams::from_suri(
 				&rialto_sign.rialto_signer,
 				rialto_sign.rialto_signer_password.as_deref(),
 			)
 			.map_err(|e| format!("Failed to parse rialto-signer: {:?}", e))?;
+			// 2. 把程序运行起来
 			millau_headers_to_rialto::run(millau_client, rialto_client, rialto_sign, prometheus_params.into()).await;
 		}
 		cli::Command::InitializeRialtoHeadersBridgeInMillau {

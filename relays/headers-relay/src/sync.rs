@@ -54,6 +54,7 @@ pub enum TargetTransactionMode {
 }
 
 /// Headers synchronization context.
+// bear - headers 同步的上下文 
 #[derive(Debug)]
 pub struct HeadersSync<P: HeadersSyncPipeline> {
 	/// Synchronization parameters.
@@ -206,8 +207,9 @@ impl<P: HeadersSyncPipeline> HeadersSync<P> {
 	}
 
 	/// Receive new target header number from the source node.
+	// bear- 更新上下文中的 source best number
 	pub fn source_best_header_number_response(&mut self, best_header_number: P::Number) {
-		log::debug!(
+		log::info!(
 			target: "bridge",
 			"Received best header number from {} node: {}",
 			P::SOURCE_NAME,
@@ -219,7 +221,7 @@ impl<P: HeadersSyncPipeline> HeadersSync<P> {
 	/// Receive new best header from the target node.
 	/// Returns true if it is different from the previous block known to us.
 	pub fn target_best_header_response(&mut self, best_header: HeaderIdOf<P>) -> bool {
-		log::debug!(
+		log::info!(
 			target: "bridge",
 			"Received best known header from {}: {:?}",
 			P::TARGET_NAME,
@@ -243,7 +245,7 @@ impl<P: HeadersSyncPipeline> HeadersSync<P> {
 
 		// we are ready to submit headers again
 		if self.pause_submit {
-			log::debug!(
+			log::info!(
 				target: "bridge",
 				"Ready to submit {} headers to {} node again!",
 				P::SOURCE_NAME,
@@ -258,7 +260,7 @@ impl<P: HeadersSyncPipeline> HeadersSync<P> {
 
 	/// Pause headers submit until best header will be updated on target node.
 	pub fn pause_submit(&mut self) {
-		log::debug!(
+		log::info!(
 			target: "bridge",
 			"Stopping submitting {} headers to {} node. Waiting for {} submitted headers to be accepted",
 			P::SOURCE_NAME,

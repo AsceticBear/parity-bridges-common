@@ -13,7 +13,7 @@
 
 # run
 RUST_LOG=runtime=trace,rpc=debug \
-    ./target/debug/millau-bridge-node \
+    ./target/release/millau-bridge-node \
         --dev --tmp \
         --port 30333 \
         --ws-port 9945 \

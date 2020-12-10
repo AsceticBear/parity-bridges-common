@@ -270,7 +270,7 @@ pub async fn run<P: MessageRace, SC: SourceClient<P>, TC: TargetClient<P>>(
 					nonces,
 					&mut source_retry_backoff,
 					|(at_block, nonces)| {
-						log::debug!(
+						log::info!(
 							target: "bridge",
 							"Received nonces from {}: {:?}",
 							P::source_name(),
@@ -291,7 +291,7 @@ pub async fn run<P: MessageRace, SC: SourceClient<P>, TC: TargetClient<P>>(
 					nonces,
 					&mut target_retry_backoff,
 					|(_, nonces)| {
-						log::debug!(
+						log::info!(
 							target: "bridge",
 							"Received nonces from {}: {:?}",
 							P::target_name(),
@@ -312,7 +312,7 @@ pub async fn run<P: MessageRace, SC: SourceClient<P>, TC: TargetClient<P>>(
 					proof,
 					&mut source_retry_backoff,
 					|(at_block, nonces_range, proof)| {
-						log::debug!(
+						log::info!(
 							target: "bridge",
 							"Received proof for nonces in range {:?} from {}",
 							nonces_range,
@@ -331,7 +331,7 @@ pub async fn run<P: MessageRace, SC: SourceClient<P>, TC: TargetClient<P>>(
 					proof_submit_result,
 					&mut target_retry_backoff,
 					|nonces_range| {
-						log::debug!(
+						log::info!(
 							target: "bridge",
 							"Successfully submitted proof of nonces {:?} to {}",
 							nonces_range,
@@ -372,7 +372,7 @@ pub async fn run<P: MessageRace, SC: SourceClient<P>, TC: TargetClient<P>>(
 			let best_at_source = strategy.best_at_source();
 
 			if let Some((at_block, nonces_range, proof_parameters)) = nonces_to_deliver {
-				log::debug!(
+				log::info!(
 					target: "bridge",
 					"Asking {} to prove nonces in range {:?} at block {:?}",
 					P::source_name(),
@@ -385,7 +385,7 @@ pub async fn run<P: MessageRace, SC: SourceClient<P>, TC: TargetClient<P>>(
 						.fuse(),
 				);
 			} else if source_nonces_required && best_at_source.is_some() {
-				log::debug!(target: "bridge", "Asking {} about message nonces", P::source_name());
+				log::info!(target: "bridge", "Asking {} about message nonces", P::source_name());
 				let at_block = race_state
 					.best_finalized_source_header_id_at_source
 					.as_ref()
@@ -408,7 +408,7 @@ pub async fn run<P: MessageRace, SC: SourceClient<P>, TC: TargetClient<P>>(
 			target_client_is_online = false;
 
 			if let Some((at_block, nonces_range, proof)) = race_state.nonces_to_submit.as_ref() {
-				log::debug!(
+				log::info!(
 					target: "bridge",
 					"Going to submit proof of messages in range {:?} to {} node",
 					nonces_range,
@@ -420,7 +420,7 @@ pub async fn run<P: MessageRace, SC: SourceClient<P>, TC: TargetClient<P>>(
 						.fuse(),
 				);
 			} else if target_nonces_required {
-				log::debug!(target: "bridge", "Asking {} about message nonces", P::target_name());
+				log::info!(target: "bridge", "Asking {} about message nonces", P::target_name());
 				let at_block = race_state
 					.best_target_header_id
 					.as_ref()

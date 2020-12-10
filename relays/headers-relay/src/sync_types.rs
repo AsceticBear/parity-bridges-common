@@ -70,6 +70,7 @@ pub trait HeadersSyncPipeline: Clone + Send + Sync {
 	/// 4) header and completion data are submitted in separate transactions.
 	///
 	/// Example: Substrate GRANDPA justifications.
+	// bear - 这里很重要
 	type Completion: Clone + Send + Sync + std::fmt::Debug;
 
 	/// Function used to estimate size of target-encoded header.
