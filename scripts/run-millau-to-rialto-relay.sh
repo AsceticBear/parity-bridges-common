@@ -21,15 +21,20 @@
 #     submit-millau-to-rialto-message               Submit message to given Millau -> Rialto lane
 #     submit-rialto-to-millau-message               Submit message to given Rialto -> Millau lane
 
+# bear
 
-# ./target/debug/substrate-relay initialize-millau-headers-bridge-in-rialto \
-#     --millau-host 127.0.0.1 \
-#     --millau-port 9945 \
-#     --rialto-host 127.0.0.1 \
-#     --rialto-port 9946 \
-#     --rialto-signer //Alice
+# compile
+# cargo build -p substrate-relay
 
-# sleep 6
+# run
+./target/debug/substrate-relay initialize-millau-headers-bridge-in-rialto \
+    --millau-host 127.0.0.1 \
+    --millau-port 9945 \
+    --rialto-host 127.0.0.1 \
+    --rialto-port 9946 \
+    --rialto-signer //Alice
+
+sleep 6
 
 RUST_LOG=substrate-relay=debug \
     ./target/debug/substrate-relay millau-headers-to-rialto \
