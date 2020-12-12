@@ -97,9 +97,11 @@ decl_storage! {
 		/// require a Grandpa justification.
 		RequiresJustification: map hasher(identity) BridgedBlockHash<T> => BridgedBlockNumber<T>;
 		/// Headers which have been imported into the pallet.
+		// bear - 记录 import 到 substrate light client pallet 的存储块头
 		ImportedHeaders: map hasher(identity) BridgedBlockHash<T> => Option<ImportedHeader<BridgedHeader<T>>>;
 		/// The current Grandpa Authority set.
 		CurrentAuthoritySet: AuthoritySet;
+		// bear - 不理解这里
 		/// The next scheduled authority set change for a given fork.
 		///
 		/// The fork is indicated by the header which _signals_ the change (key in the mapping).
@@ -107,6 +109,7 @@ decl_storage! {
 		// Grandpa doesn't require there to always be a pending change. In fact, most of the time
 		// there will be no pending change available.
 		NextScheduledChange: map hasher(identity) BridgedBlockHash<T> => Option<ScheduledChange<BridgedBlockNumber<T>>>;
+		// bear - 这两项先不用管，是治理相关的
 		/// Optional pallet owner.
 		///
 		/// Pallet owner has a right to halt all pallet operations and then resume it. If it is
@@ -414,7 +417,7 @@ fn initialize_bridge<T: Trait>(init_params: InitializationData<BridgedHeader<T>>
 	CurrentAuthoritySet::put(authority_set);
 
 	<ImportedHeaders<T>>::insert(
-		// 更新 imported Headers
+		// 更新 imported Headers，注意：这里的 require_justification = false, is_finalized = true
 		initial_hash,
 		ImportedHeader {
 			header,
@@ -504,6 +507,7 @@ impl<T> PalletStorage<T> {
 impl<T: Trait> BridgeStorage for PalletStorage<T> {
 	type Header = BridgedHeader<T>;
 
+	// bear - 往 pallet storage 中写存储内容
 	fn write_header(&mut self, header: &ImportedHeader<BridgedHeader<T>>) {
 		use core::cmp::Ordering;
 
@@ -511,6 +515,9 @@ impl<T: Trait> BridgeStorage for PalletStorage<T> {
 		let current_height = header.number();
 		let best_height = <BestHeight<T>>::get();
 
+		// bear - 比对高度
+		// 1. 如果和现有 BestHeight 高度一样，那说明可能是分叉块，需要更新 BestHeaders
+		// 2. 如果大于现有的 BestHeight, 需要更新原来的 BestHeight 为最新，清理 BestHeaders, 并把最新的加上
 		match current_height.cmp(&best_height) {
 			Ordering::Equal => {
 				<BestHeaders<T>>::append(hash);
@@ -589,6 +596,7 @@ impl<T: Trait> BridgeStorage for PalletStorage<T> {
 		CurrentAuthoritySet::put(new_set)
 	}
 
+	// bear - 替换 authority set
 	fn enact_authority_set(&mut self, signal_hash: BridgedBlockHash<T>) -> Result<(), ()> {
 		let new_set = <NextScheduledChange<T>>::take(signal_hash).ok_or(())?.authority_set;
 		self.update_current_authority_set(new_set);

@@ -153,6 +153,7 @@ where
 		let scheduled_change = find_scheduled_change(&header);
 
 		// Check if our fork is expecting an authority set change
+		// TODO: bear - 这里不理解 
 		let requires_justification = if let Some(hash) = signal_hash {
 			const PROOF: &str = "If the header has a signal hash it means there's an accompanying set
 							change in storage, therefore this must always be valid.";
@@ -170,6 +171,7 @@ where
 		} else {
 			// Since we don't currently have a pending authority set change let's check if the header
 			// contains a log indicating when the next change should be.
+			// 如果块里边有这样的日志记录的话
 			if let Some(change) = scheduled_change {
 				let mut total_weight = 0u64;
 
@@ -201,6 +203,7 @@ where
 
 				// Note: It's important that the signal hash is updated if a header schedules a
 				// change or else we end up with inconsistencies in other places.
+				// 更新 header 里的 signal hash 的情况, 
 				signal_hash = Some(hash);
 				self.storage.schedule_next_set_change(hash, scheduled_change);
 
@@ -353,6 +356,7 @@ where
 	Some(ancestors)
 }
 
+// bear-通过过滤区块头日志的方式获取到 authority set 改变的未来时间
 fn find_scheduled_change<H: HeaderT>(header: &H) -> Option<sp_finality_grandpa::ScheduledChange<H::Number>> {
 	frame_support::debug::info!("bear(find_scheduled_change) - here");
 	let id = OpaqueDigestItemId::Consensus(&GRANDPA_ENGINE_ID);

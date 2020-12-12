@@ -452,6 +452,7 @@ impl<P: HeadersSyncPipeline> QueuedHeaders<P> {
 	}
 
 	/// When incomplete headers ids are receved from target node.
+	// bear - 重点关注
 	pub fn incomplete_headers_response(&mut self, ids: HashSet<HeaderIdOf<P>>) {
 		// all new incomplete headers are marked Synced and all their descendants
 		// are moved from Ready/Submitted to Incomplete queue

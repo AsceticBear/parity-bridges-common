@@ -118,6 +118,7 @@ where
 		}
 	}
 
+	// bear - 这里其实是 relayer 向 runtime 主动请求，in complete list
 	async fn incomplete_headers_ids(&self) -> Result<HashSet<HeaderIdOf<P>>, Self::Error> {
 		let call = P::INCOMPLETE_HEADERS_METHOD.into();
 		let data = Bytes(Vec::new());
@@ -134,6 +135,7 @@ where
 		Ok(incomplete_headers)
 	}
 
+	// bear - 
 	async fn complete_header(
 		&self,
 		id: HeaderIdOf<P>,

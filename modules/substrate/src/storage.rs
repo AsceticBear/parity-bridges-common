@@ -47,6 +47,7 @@ pub struct InitializationData<H: HeaderT> {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct AuthoritySet {
 	/// List of Grandpa authorities for the current round.
+	// bear- type AuthorityList = Vec<(AuthorityId, AuthorityWeight)>; 这样的类型
 	pub authorities: AuthorityList,
 	/// Monotonic identifier of the current Grandpa authority set.
 	pub set_id: SetId,
@@ -72,6 +73,7 @@ pub struct ScheduledChange<N> {
 }
 
 /// A more useful representation of a header for storage purposes.
+// bear - 这个数据结构太重要了，要多加关注。 
 #[derive(Default, Encode, Decode, Clone, RuntimeDebug, PartialEq)]
 pub struct ImportedHeader<H: HeaderT> {
 	/// A plain Substrate header.
