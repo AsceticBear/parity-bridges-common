@@ -177,7 +177,7 @@ decl_module! {
 		) -> DispatchResult {
 			ensure_operational::<T>()?;
 			let _ = ensure_signed(origin)?;
-			frame_support::debug::info!("Got header {:?}", header);
+			frame_support::debug::info!("bear(import_signed_header) - import_signed_header {:?}", header);
 
 			let mut verifier = verifier::Verifier {
 				storage: PalletStorage::<T>::new(),
@@ -204,7 +204,7 @@ decl_module! {
 		) -> DispatchResult {
 			ensure_operational::<T>()?;
 			let _ = ensure_signed(origin)?;
-			frame_support::debug::info!("Got header hash {:?}", hash);
+			frame_support::debug::info!("beaar(finalize_header) - finalize_header {:?}", hash);
 
 			let mut verifier = verifier::Verifier {
 				storage: PalletStorage::<T>::new(),
@@ -305,11 +305,13 @@ impl<T: Trait> Module<T> {
 	/// pallet should be confident that any transactions that were
 	/// included in this or any previous header will not be reverted.
 	pub fn best_finalized() -> BridgedHeader<T> {
+		frame_support::debug::info!("bear(rpc) best_finalized");
 		PalletStorage::<T>::new().best_finalized_header().header
 	}
 
 	/// Check if a particular header is known to the bridge pallet.
 	pub fn is_known_header(hash: BridgedBlockHash<T>) -> bool {
+		frame_support::debug::info!("bear(rpc) is_known_header {:?}", hash);
 		PalletStorage::<T>::new().header_exists(hash)
 	}
 
@@ -320,6 +322,7 @@ impl<T: Trait> Module<T> {
 	// once we track forks since there could be an older header on a
 	// different fork which isn't an ancestor of our best finalized header.
 	pub fn is_finalized_header(hash: BridgedBlockHash<T>) -> bool {
+		frame_support::debug::info!("bear(rpc) is_finalized_header {:?}", hash);
 		let storage = PalletStorage::<T>::new();
 		if let Some(header) = storage.header_by_hash(hash) {
 			header.is_finalized
@@ -332,6 +335,7 @@ impl<T: Trait> Module<T> {
 	///
 	/// These headers require proofs because they enact authority set changes.
 	pub fn require_justifications() -> Vec<(BridgedBlockNumber<T>, BridgedBlockHash<T>)> {
+		frame_support::debug::info!("bear(rpc) require_justifications");
 		PalletStorage::<T>::new()
 			.missing_justifications()
 			.iter()
@@ -533,6 +537,7 @@ impl<T: Trait> BridgeStorage for PalletStorage<T> {
 			}
 		}
 
+		frame_support::debug::info!("bear(write_header) write_header header.requires_justification {:?}", header.requires_justification);
 		if header.requires_justification {
 			<RequiresJustification<T>>::insert(hash, current_height);
 		} else {
@@ -583,6 +588,7 @@ impl<T: Trait> BridgeStorage for PalletStorage<T> {
 	}
 
 	fn missing_justifications(&self) -> Vec<HeaderId<BridgedHeader<T>>> {
+		frame_support::debug::info!("bear(missing_justifications)");
 		<RequiresJustification<T>>::iter()
 			.map(|(hash, number)| HeaderId { number, hash })
 			.collect()

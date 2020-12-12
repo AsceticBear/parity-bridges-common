@@ -250,6 +250,8 @@ where
 	let mut selected_justification = None;
 	while let Some((target, justification)) = queue.pop_front() {
 		// if we're waiting for this justification, report it
+		log::info!(target: "bridge", "bear(select_justification-maintain) - target {:?}", target);
+		log::info!(target: "bridge", "bear(select_justification-maintain) - sync.headers().requires_completion_data {:?}", sync.headers().requires_completion_data(&target));
 		if sync.headers().requires_completion_data(&target) {
 			sync.headers_mut().completion_response(&target, Some(justification));
 			// we won't submit previous justifications as we going to submit justification for

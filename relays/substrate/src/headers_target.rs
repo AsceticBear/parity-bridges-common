@@ -126,6 +126,7 @@ where
 		let encoded_response = self.client.state_call(call, data, None).await?;
 		let decoded_response: Vec<(P::Number, P::Hash)> =
 			Decode::decode(&mut &encoded_response.0[..]).map_err(SubstrateError::ResponseParseFailed)?;
+		log::info!(target: "bridge", "bear(incomplete_headers_ids) - decoded_response {:?}", decoded_response);
 
 		let incomplete_headers = decoded_response
 			.into_iter()

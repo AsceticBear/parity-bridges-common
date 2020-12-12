@@ -14,8 +14,8 @@
 # cargo build -p rialto-bridge-node
 
 # run
-RUST_LOG=runtime=trace,rpc=debug \
-    ./target/release/rialto-bridge-node  \
+RUST_LOG=runtime=trace,rpc=info \
+    ./target/debug/rialto-bridge-node  \
         --dev --tmp \
         --port 30334 \
         --ws-port 9946 \

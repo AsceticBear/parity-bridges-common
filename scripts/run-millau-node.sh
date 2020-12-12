@@ -12,8 +12,8 @@
 # cargo build -p millau-bridge-node
 
 # run
-RUST_LOG=runtime=trace,rpc=debug \
-    ./target/release/millau-bridge-node \
+RUST_LOG=runtime=trace,rpc=info \
+    ./target/debug/millau-bridge-node \
         --dev --tmp \
         --port 30333 \
         --ws-port 9945 \

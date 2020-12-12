@@ -116,12 +116,14 @@ where
 	pub fn import_header(&mut self, header: H) -> Result<(), ImportError> {
 		let hash = header.hash();
 		let best_finalized = self.storage.best_finalized_header();
-
+		frame_support::debug::info!("bear(import_header) number {:?}", header.number());
+		frame_support::debug::info!("bear(import_header) best_finalized {:?}", best_finalized.number());
+		
 		// 1. 和当前 pallet 里的存储高度比较
 		if header.number() <= best_finalized.number() {
 			return Err(ImportError::OldHeader);
 		}
-
+		
 		// 2. 当前 storage 是否存的有
 		if self.storage.header_exists(hash) {
 			return Err(ImportError::HeaderAlreadyExists);
@@ -151,6 +153,7 @@ where
 		let mut signal_hash = parent_header.signal_hash;
 		frame_support::debug::info!("bear(import_header) signal_hash {:?}", signal_hash);
 		let scheduled_change = find_scheduled_change(&header);
+		frame_support::debug::info!("bear(import_header) scheduled_change {:?}", scheduled_change);
 
 		// Check if our fork is expecting an authority set change
 		// TODO: bear - 这里不理解 
@@ -191,6 +194,7 @@ where
 					authorities: change.next_authorities,
 					set_id: self.storage.current_authority_set().set_id + 1,
 				};
+				frame_support::debug::info!("bear(import_header) next_set {:?}", next_set);
 
 				let height = (*header.number())
 					.checked_add(&change.delay)
@@ -205,6 +209,7 @@ where
 				// change or else we end up with inconsistencies in other places.
 				// 更新 header 里的 signal hash 的情况, 
 				signal_hash = Some(hash);
+				frame_support::debug::info!("bear(import_header) - signal_hash {:?}, schedule_next_set_change {:?}", signal_hash, scheduled_change);
 				self.storage.schedule_next_set_change(hash, scheduled_change);
 
 				// If the delay is 0 this header will enact the change it signaled
@@ -214,12 +219,15 @@ where
 			}
 		};
 
+		frame_support::debug::info!("bear(import_header) - requires_justification {:?}", requires_justification);
 		self.storage.write_header(&ImportedHeader {
 			header,
 			requires_justification,
 			is_finalized: false,
 			signal_hash,
 		});
+		frame_support::debug::info!("bear(import_header) write header successfully");
+
 
 		Ok(())
 	}
@@ -229,12 +237,14 @@ where
 	/// header has been finalized.
 	// bear - 至关重要的一个地方
 	pub fn import_finality_proof(&mut self, hash: H::Hash, proof: FinalityProof) -> Result<(), FinalizationError> {
+		
 		// Make sure that we've previously imported this header
 		// 1. 确保 pallet 存储里已经包括这个区块了
 		let header = self
 			.storage
 			.header_by_hash(hash)
 			.ok_or(FinalizationError::UnknownHeader)?;
+		frame_support::debug::info!("bear(import_finality_proof) header number {:?}", header.number());
 
 		// We don't want to finalize an ancestor of an already finalized
 		// header, this would be inconsistent
@@ -243,6 +253,7 @@ where
 		if header.number() <= last_finalized.number() {
 			return Err(FinalizationError::OldHeader);
 		}
+		frame_support::debug::info!("bear(import_finality_proof) last_finalized {:?}", last_finalized.number());
 
 		// 3. 取出当前的 authority set list 集合
 		let current_authority_set = self.storage.current_authority_set();
@@ -250,6 +261,7 @@ where
 			"We verified the correctness of the authority list during header import,
 			before writing them to storage. This must always be valid.",
 		);
+		frame_support::debug::info!("bear(import_finality_proof) current_authority_set {:?}", voter_set);
 
 		// 4. 验证 justification 的正确性，不需要区块的历史信息
 		verify_justification::<H>(
@@ -261,7 +273,7 @@ where
 		.map_err(|_| FinalizationError::InvalidJustification)?;
 		frame_support::debug::info!(target: "sub-bridge", "Received valid justification for {:?}", header);
 
-		frame_support::debug::info!(target: "sub-bridge", "Checking ancestry for headers between {:?} and {:?}", last_finalized, header);
+		frame_support::debug::info!(target: "sub-bridge", "Checking ancestry for headers between {:?} and {:?}", last_finalized.number(), header.number());
 		let mut finalized_headers =
 			// 找到当前 header 和历史 last finalized 区块之间的区块 
 			if let Some(ancestors) = headers_between(&self.storage, last_finalized, header.clone()) {
@@ -295,6 +307,7 @@ where
 		// If the current header was marked as `requires_justification` it means that it enacts a
 		// new authority set change. When we finalize the header we need to update the current
 		// authority set.
+		frame_support::debug::info!("bear(import_finality_proof) header.requires_justification {:?}", header.requires_justification);
 		if header.requires_justification {
 			const SIGNAL_HASH_PROOF: &str = "When we import a header we only mark it as
 			`requires_justification` if we have checked that it contains a signal hash. Therefore
@@ -311,6 +324,7 @@ where
 				.expect(ENACT_SET_PROOF);
 		}
 
+		frame_support::debug::info!("bear(import_finality_proof) finalized_headers {:?}", finalized_headers);
 		// 在这里会设置 is_finalized 标识为 true
 		for header in finalized_headers.iter_mut() {
 			header.is_finalized = true;
@@ -322,6 +336,7 @@ where
 		// 更新 best finalize block 的情况
 		self.storage.update_best_finalized(hash);
 
+		frame_support::debug::info!("bear(import_finality_proof) successfully");
 		Ok(())
 	}
 }
@@ -358,7 +373,6 @@ where
 
 // bear-通过过滤区块头日志的方式获取到 authority set 改变的未来时间
 fn find_scheduled_change<H: HeaderT>(header: &H) -> Option<sp_finality_grandpa::ScheduledChange<H::Number>> {
-	frame_support::debug::info!("bear(find_scheduled_change) - here");
 	let id = OpaqueDigestItemId::Consensus(&GRANDPA_ENGINE_ID);
 
 	let filter_log = |log: ConsensusLog<H::Number>| match log {

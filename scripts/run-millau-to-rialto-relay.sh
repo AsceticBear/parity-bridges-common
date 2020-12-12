@@ -27,7 +27,7 @@
 # cargo build -p substrate-relay
 
 # run
-./target/release/substrate-relay initialize-millau-headers-bridge-in-rialto \
+./target/debug/substrate-relay initialize-millau-headers-bridge-in-rialto \
     --millau-host 127.0.0.1 \
     --millau-port 9945 \
     --rialto-host 127.0.0.1 \
@@ -37,13 +37,13 @@
 sleep 6
 
 RUST_LOG=substrate-relay=debug \
-    ./target/release/substrate-relay millau-headers-to-rialto \
+    ./target/debug/substrate-relay millau-headers-to-rialto \
 	--millau-host 127.0.0.1 \
 	--millau-port 9945 \
 	--rialto-host 127.0.0.1 \
 	--rialto-port 9946 \
 	--rialto-signer //Alice \
-	--prometheus-host=0.0.0.0
+	--prometheus-host=0.0.0.0 > relay.log 2>&1
 
 
 
