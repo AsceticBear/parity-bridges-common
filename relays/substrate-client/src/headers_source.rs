@@ -83,6 +83,7 @@ where
 		id: HeaderIdOf<P>,
 	) -> Result<(HeaderIdOf<P>, Option<P::Completion>), Self::Error> {
 		let hash = id.1;
+		// bear - SignedBlock 是带 justification 的 Block
 		let signed_block = self.client.get_block(Some(hash)).await?;
 		let grandpa_justification = signed_block.justification().cloned();
 

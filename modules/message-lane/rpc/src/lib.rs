@@ -42,6 +42,7 @@ pub type MessagesProof = Bytes;
 pub type MessagesDeliveryProof = Bytes;
 
 /// Runtime adapter.
+// bear - 这个是什么意思呢
 pub trait Runtime: Send + Sync + 'static {
 	/// Return runtime storage key for given message. May return None if instance is unknown.
 	fn message_key(&self, instance: &InstanceId, lane: &LaneId, nonce: MessageNonce) -> Option<StorageKey>;
@@ -56,6 +57,9 @@ pub trait Runtime: Send + Sync + 'static {
 pub trait MessageLaneApi<BlockHash> {
 	/// Returns storage proof of messages in given inclusive range. The state of outbound
 	/// lane is included in the proof if `include_outbound_lane_state` is true.
+	// bear
+	// 证明消息，声明部分
+	// 1. message race delivery 调用
 	#[rpc(name = "messageLane_proveMessages")]
 	fn prove_messages(
 		&self,
@@ -101,6 +105,8 @@ where
 	Backend: BackendT<Block> + 'static,
 	R: Runtime,
 {
+	// message lane pallet 证明消息的存在
+	//
 	fn prove_messages(
 		&self,
 		instance: InstanceId,
@@ -151,6 +157,7 @@ where
 	}
 }
 
+// 被 prove_message, prove_message_delivery 调用
 async fn prove_keys_read<Block, Backend>(
 	backend: Arc<Backend>,
 	block: Option<Block::Hash>,
@@ -160,12 +167,15 @@ where
 	Block: BlockT,
 	Backend: BackendT<Block> + 'static,
 {
+	//
 	let block = unwrap_or_best(&*backend, block);
 	let state = backend.state_at(BlockId::Hash(block)).map_err(blockchain_err)?;
 	let keys = keys
 		.into_iter()
 		.map(|key| key.ok_or(Error::UnknownInstance).map(|key| key.0))
 		.collect::<Result<Vec<_>, _>>()?;
+
+	// 从 state 里读出 keys 对应的 proof
 	let storage_proof = prove_read(state, keys)
 		.map_err(BlockchainError::Execution)
 		.map_err(blockchain_err)?;

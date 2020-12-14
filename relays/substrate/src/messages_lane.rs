@@ -69,6 +69,7 @@ pub trait SubstrateMessageLane: MessageLane {
 }
 
 /// Substrate-to-Substrate message lane.
+// bear - bear: sub - sub lane 定义
 #[derive(Debug)]
 pub struct SubstrateMessageLaneToSubstrate<Source: Chain, SourceSignParams, Target: Chain, TargetSignParams> {
 	/// Client for the source Substrate chain.

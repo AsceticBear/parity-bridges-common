@@ -205,6 +205,8 @@ pub struct ClientsState<P: MessageLane> {
 }
 
 /// Run message lane service loop.
+// bear - message lane loop 启动
+// 1. 从 main -> cli -> millau_messages_to_rialto.rs 处调用过来
 pub fn run<P: MessageLane>(
 	params: Params,
 	mut source_client: impl SourceClient<P>,
@@ -300,6 +302,7 @@ pub fn run<P: MessageLane>(
 }
 
 /// Run one-way message delivery loop until connection with target or source node is lost, or exit signal is received.
+// bear - 真正的 run
 async fn run_until_connection_lost<P: MessageLane, SC: SourceClient<P>, TC: TargetClient<P>>(
 	params: Params,
 	source_client: SC,
@@ -326,6 +329,7 @@ async fn run_until_connection_lost<P: MessageLane, SC: SourceClient<P>, TC: Targ
 		(delivery_source_state_sender, delivery_source_state_receiver),
 		(delivery_target_state_sender, delivery_target_state_receiver),
 	) = (unbounded(), unbounded());
+	// race 1
 	let delivery_race_loop = run_message_delivery_race(
 		source_client.clone(),
 		delivery_source_state_receiver,
@@ -337,6 +341,7 @@ async fn run_until_connection_lost<P: MessageLane, SC: SourceClient<P>, TC: Targ
 	)
 	.fuse();
 
+	// race2
 	let (
 		(receiving_source_state_sender, receiving_source_state_receiver),
 		(receiving_target_state_sender, receiving_target_state_receiver),

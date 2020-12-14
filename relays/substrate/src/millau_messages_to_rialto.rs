@@ -33,6 +33,7 @@ use sp_core::Pair;
 use std::{ops::RangeInclusive, time::Duration};
 
 /// Millau-to-Rialto message lane.
+// bear - Millau 到 Rialto 之间的 message lane
 type MillauMessagesToRialto = SubstrateMessageLaneToSubstrate<Millau, MillauSigningParams, Rialto, RialtoSigningParams>;
 
 #[async_trait]
@@ -54,6 +55,7 @@ impl SubstrateMessageLane for MillauMessagesToRialto {
 	type SourceSignedTransaction = <Millau as TransactionSignScheme>::SignedTransaction;
 	type TargetSignedTransaction = <Rialto as TransactionSignScheme>::SignedTransaction;
 
+	// relayer 还要把 messages receiving 的 proof 传递给 millau
 	async fn make_messages_receiving_proof_transaction(
 		&self,
 		_generated_at_block: RialtoHeaderId,
@@ -66,6 +68,8 @@ impl SubstrateMessageLane for MillauMessagesToRialto {
 		Ok(transaction)
 	}
 
+	// 发送 message 到 rialto
+	// 1。 从 message_target.rs submit_messages_proof 处调用过来
 	async fn make_messages_delivery_transaction(
 		&self,
 		_generated_at_header: MillauHeaderId,
@@ -73,6 +77,8 @@ impl SubstrateMessageLane for MillauMessagesToRialto {
 		proof: <Self as MessageLane>::MessagesProof,
 	) -> Result<Self::TargetSignedTransaction, SubstrateError> {
 		let (dispatch_weight, proof) = proof;
+
+		// 把 proof 组成一个 call 发送到 target chain
 		let account_id = self.target_sign.signer.public().as_array_ref().clone().into();
 		let nonce = self.target_client.next_account_index(account_id).await?;
 		let call = rialto_runtime::MessageLaneCall::receive_messages_proof(
@@ -93,6 +99,7 @@ type MillauSourceClient = SubstrateMessagesSource<Millau, MillauMessagesToRialto
 type RialtoTargetClient = SubstrateMessagesTarget<Rialto, MillauMessagesToRialto>;
 
 /// Run Millau-to-Rialto messages sync.
+// 开启 millau 到 rialto 的 message relay 过程
 pub fn run(
 	millau_client: MillauClient,
 	millau_sign: MillauSigningParams,
@@ -105,6 +112,7 @@ pub fn run(
 	let stall_timeout = Duration::from_secs(5 * 60);
 	let relayer_id_at_millau = millau_sign.signer.public().as_array_ref().clone().into();
 
+	// 建立一个车道
 	let lane = MillauMessagesToRialto {
 		source_client: millau_client.clone(),
 		source_sign: millau_sign,

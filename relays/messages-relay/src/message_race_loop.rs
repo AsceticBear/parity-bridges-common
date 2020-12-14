@@ -176,6 +176,7 @@ pub trait RaceStrategy<SourceHeaderId, TargetHeaderId, Proof> {
 }
 
 /// State of the race.
+// Race State 定义的结构
 #[derive(Debug)]
 pub struct RaceState<SourceHeaderId, TargetHeaderId, Proof> {
 	/// Best finalized source header id at the source client.
@@ -192,6 +193,8 @@ pub struct RaceState<SourceHeaderId, TargetHeaderId, Proof> {
 }
 
 /// Run race loop until connection with target or source node is lost.
+// bear-
+// messatge_lane_loop -> message race loop
 pub async fn run<P: MessageRace, SC: SourceClient<P>, TC: TargetClient<P>>(
 	race_source: SC,
 	race_source_updated: impl FusedStream<Item = SourceClientState<P>>,
@@ -207,6 +210,7 @@ pub async fn run<P: MessageRace, SC: SourceClient<P>, TC: TargetClient<P>>(
 		TargetNoncesData = TC::TargetNoncesData,
 	>,
 ) -> Result<(), FailedClient> {
+	// 看不懂
 	let mut progress_context = Instant::now();
 	let mut race_state = RaceState::default();
 	let mut stall_countdown = Instant::now();

@@ -176,6 +176,7 @@ where
 		))
 	}
 
+	// 提交 message receiving proof 给 millau
 	async fn submit_proof(
 		&self,
 		generated_at_block: TargetHeaderIdOf<P>,

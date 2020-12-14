@@ -165,6 +165,10 @@ impl<T: Trait<I>, I: Instance> MessageDispatch<T::MessageId> for Module<T, I> {
 		message.weight
 	}
 
+	// bear - 分发消息
+	// 1. 消息的 spec version 和 节点的 spec versioni 进行比较，只有相同的时候，才继续进行。
+	// 2. 校验消息发送的 weight
+	// 3.
 	fn dispatch(bridge: InstanceId, id: T::MessageId, message: Self::Message) {
 		// verify spec version
 		// (we want it to be the same, because otherwise we may decode Call improperly)

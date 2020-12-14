@@ -346,6 +346,7 @@ impl<T: Trait> Module<T> {
 	/// Verify that the passed storage proof is valid, given it is crafted using
 	/// known finalized header. If the proof is valid, then the `parse` callback
 	/// is called and the function returns its result.
+	// 校验 message delivery proof 的过程
 	pub fn parse_finalized_storage_proof<R>(
 		finalized_header_hash: BridgedBlockHash<T>,
 		storage_proof: StorageProof,
@@ -537,7 +538,10 @@ impl<T: Trait> BridgeStorage for PalletStorage<T> {
 			}
 		}
 
-		frame_support::debug::info!("bear(write_header) write_header header.requires_justification {:?}", header.requires_justification);
+		frame_support::debug::info!(
+			"bear(write_header) write_header header.requires_justification {:?}",
+			header.requires_justification
+		);
 		if header.requires_justification {
 			<RequiresJustification<T>>::insert(hash, current_height);
 		} else {

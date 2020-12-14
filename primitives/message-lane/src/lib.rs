@@ -39,6 +39,7 @@ pub type LaneId = [u8; 4];
 pub type MessageNonce = u64;
 
 /// Message id as a tuple.
+// bear - Message ID 的定义
 pub type MessageId = (LaneId, MessageNonce);
 
 /// Opaque message payload. We only decode this payload when it is dispatched.
@@ -63,6 +64,7 @@ pub struct MessageData<Fee> {
 }
 
 /// Message as it is stored in the storage.
+// bear - Message 的结构
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug)]
 pub struct Message<Fee> {
 	/// Message key.
@@ -72,8 +74,10 @@ pub struct Message<Fee> {
 }
 
 /// Inbound lane data.
+// bear - 入库车道信息
 #[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq)]
 pub struct InboundLaneData<RelayerId> {
+	// bear - 不是很理解这段话的含义
 	/// Identifiers of relayers and messages that they have delivered (ordered by message nonce).
 	/// It is guaranteed to have at most N entries, where N is configured at module level. If
 	/// there are N entries in this vec, then:
@@ -113,6 +117,7 @@ pub struct UnrewardedRelayersState {
 }
 
 /// Outbound lane data.
+// bear - 出库车道信息
 #[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq)]
 pub struct OutboundLaneData {
 	/// Nonce of oldest message that we haven't yet pruned. May point to not-yet-generated message if

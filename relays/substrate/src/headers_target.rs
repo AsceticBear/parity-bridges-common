@@ -136,7 +136,7 @@ where
 		Ok(incomplete_headers)
 	}
 
-	// bear - 
+	// bear -
 	async fn complete_header(
 		&self,
 		id: HeaderIdOf<P>,

@@ -136,6 +136,7 @@ pub enum Command {
 		#[structopt(long)]
 		lane: HexLaneId,
 		/// Message type.
+		// bear - 消息类型
 		#[structopt(long, possible_values = &ToMillauMessage::variants())]
 		message: ToMillauMessage,
 		/// Delivery and dispatch fee.

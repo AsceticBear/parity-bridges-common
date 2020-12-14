@@ -118,12 +118,12 @@ where
 		let best_finalized = self.storage.best_finalized_header();
 		frame_support::debug::info!("bear(import_header) number {:?}", header.number());
 		frame_support::debug::info!("bear(import_header) best_finalized {:?}", best_finalized.number());
-		
+
 		// 1. 和当前 pallet 里的存储高度比较
 		if header.number() <= best_finalized.number() {
 			return Err(ImportError::OldHeader);
 		}
-		
+
 		// 2. 当前 storage 是否存的有
 		if self.storage.header_exists(hash) {
 			return Err(ImportError::HeaderAlreadyExists);
@@ -156,7 +156,7 @@ where
 		frame_support::debug::info!("bear(import_header) scheduled_change {:?}", scheduled_change);
 
 		// Check if our fork is expecting an authority set change
-		// TODO: bear - 这里不理解 
+		// TODO: bear - 这里不理解
 		let requires_justification = if let Some(hash) = signal_hash {
 			const PROOF: &str = "If the header has a signal hash it means there's an accompanying set
 							change in storage, therefore this must always be valid.";
@@ -207,9 +207,13 @@ where
 
 				// Note: It's important that the signal hash is updated if a header schedules a
 				// change or else we end up with inconsistencies in other places.
-				// 更新 header 里的 signal hash 的情况, 
+				// 更新 header 里的 signal hash 的情况,
 				signal_hash = Some(hash);
-				frame_support::debug::info!("bear(import_header) - signal_hash {:?}, schedule_next_set_change {:?}", signal_hash, scheduled_change);
+				frame_support::debug::info!(
+					"bear(import_header) - signal_hash {:?}, schedule_next_set_change {:?}",
+					signal_hash,
+					scheduled_change
+				);
 				self.storage.schedule_next_set_change(hash, scheduled_change);
 
 				// If the delay is 0 this header will enact the change it signaled
@@ -219,7 +223,10 @@ where
 			}
 		};
 
-		frame_support::debug::info!("bear(import_header) - requires_justification {:?}", requires_justification);
+		frame_support::debug::info!(
+			"bear(import_header) - requires_justification {:?}",
+			requires_justification
+		);
 		self.storage.write_header(&ImportedHeader {
 			header,
 			requires_justification,
@@ -227,7 +234,6 @@ where
 			signal_hash,
 		});
 		frame_support::debug::info!("bear(import_header) write header successfully");
-
 
 		Ok(())
 	}
@@ -237,7 +243,6 @@ where
 	/// header has been finalized.
 	// bear - 至关重要的一个地方
 	pub fn import_finality_proof(&mut self, hash: H::Hash, proof: FinalityProof) -> Result<(), FinalizationError> {
-		
 		// Make sure that we've previously imported this header
 		// 1. 确保 pallet 存储里已经包括这个区块了
 		let header = self
@@ -253,7 +258,10 @@ where
 		if header.number() <= last_finalized.number() {
 			return Err(FinalizationError::OldHeader);
 		}
-		frame_support::debug::info!("bear(import_finality_proof) last_finalized {:?}", last_finalized.number());
+		frame_support::debug::info!(
+			"bear(import_finality_proof) last_finalized {:?}",
+			last_finalized.number()
+		);
 
 		// 3. 取出当前的 authority set list 集合
 		let current_authority_set = self.storage.current_authority_set();
@@ -307,7 +315,10 @@ where
 		// If the current header was marked as `requires_justification` it means that it enacts a
 		// new authority set change. When we finalize the header we need to update the current
 		// authority set.
-		frame_support::debug::info!("bear(import_finality_proof) header.requires_justification {:?}", header.requires_justification);
+		frame_support::debug::info!(
+			"bear(import_finality_proof) header.requires_justification {:?}",
+			header.requires_justification
+		);
 		if header.requires_justification {
 			const SIGNAL_HASH_PROOF: &str = "When we import a header we only mark it as
 			`requires_justification` if we have checked that it contains a signal hash. Therefore

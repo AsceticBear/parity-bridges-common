@@ -26,6 +26,7 @@ use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, prelude::*};
 pub type ProvedMessages<Message> = BTreeMap<LaneId, ProvedLaneMessages<Message>>;
 
 /// Proved messages from single lane of the source chain.
+// bear - 从 receive_message_proof 中解析出来的 lane 数据
 #[derive(RuntimeDebug, Encode, Decode, Clone, PartialEq, Eq)]
 pub struct ProvedLaneMessages<Message> {
 	/// Optional outbound lane state.

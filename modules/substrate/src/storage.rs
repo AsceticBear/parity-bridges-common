@@ -73,7 +73,7 @@ pub struct ScheduledChange<N> {
 }
 
 /// A more useful representation of a header for storage purposes.
-// bear - 这个数据结构太重要了，要多加关注。 
+// bear - 这个数据结构太重要了，要多加关注。
 #[derive(Default, Encode, Decode, Clone, RuntimeDebug, PartialEq)]
 pub struct ImportedHeader<H: HeaderT> {
 	/// A plain Substrate header.

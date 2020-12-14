@@ -120,6 +120,7 @@ impl<P: HeadersSyncPipeline> Deref for QueuedHeader<P> {
 }
 
 /// Header how it's stored in the synchronization queue.
+// bear - 同步 header 类型
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct QueuedHeaderData<P: HeadersSyncPipeline> {
 	header: P::Header,

@@ -39,6 +39,7 @@ pub trait OutboundLaneStorage {
 }
 
 /// Outbound messages lane.
+// bear - OutboundLane 车道
 pub struct OutboundLane<S> {
 	storage: S,
 }
@@ -52,12 +53,22 @@ impl<S: OutboundLaneStorage> OutboundLane<S> {
 	/// Send message over lane.
 	///
 	/// Returns new message nonce.
+	// bear
+	// 调用处：
+	// 1. message lane 中的 pallet 方法，send_massage finally
+	//
+	// 流程：
+	// 1. 更新 latest generated nonce
+	// 2. 保存 message， nonce
+	// 3. 更新 OutBoundLane 的 nonce 信息
 	pub fn send_message(&mut self, message_data: MessageData<S::MessageFee>) -> MessageNonce {
 		let mut data = self.storage.data();
+		// 1.
 		let nonce = data.latest_generated_nonce + 1;
 		data.latest_generated_nonce = nonce;
-
+		// 2.
 		self.storage.save_message(nonce, message_data);
+		// 3. 设置最新 latest generated nonce
 		self.storage.set_data(data);
 
 		nonce
@@ -83,6 +94,8 @@ impl<S: OutboundLaneStorage> OutboundLane<S> {
 	/// Prune at most `max_messages_to_prune` already received messages.
 	///
 	/// Returns number of pruned messages.
+	// bear -
+	// 清楚一些 OutBoundLane 中保存的信息
 	pub fn prune_messages(&mut self, max_messages_to_prune: MessageNonce) -> MessageNonce {
 		let mut pruned_messages = 0;
 		let mut anything_changed = false;

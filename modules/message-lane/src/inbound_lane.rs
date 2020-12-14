@@ -42,6 +42,7 @@ pub trait InboundLaneStorage {
 }
 
 /// Inbound messages lane.
+// bear - 入库车道
 pub struct InboundLane<S> {
 	storage: S,
 }
@@ -53,6 +54,7 @@ impl<S: InboundLaneStorage> InboundLane<S> {
 	}
 
 	/// Receive state of the corresponding outbound lane.
+	// bear - runtime 收到 messages proof 的时候调用该方法，更新 nonce值
 	pub fn receive_state_update(&mut self, outbound_lane_data: OutboundLaneData) -> Option<MessageNonce> {
 		let mut data = self.storage.data();
 		if outbound_lane_data.latest_received_nonce > data.latest_received_nonce {
@@ -87,6 +89,7 @@ impl<S: InboundLaneStorage> InboundLane<S> {
 	}
 
 	/// Receive new message.
+	// bear - runtime 收到 messages proof 的时候调用该方法，保存message
 	pub fn receive_message<P: MessageDispatch<S::MessageFee>>(
 		&mut self,
 		relayer: S::Relayer,

@@ -133,10 +133,12 @@ pub trait Trait<I = DefaultInstance>: frame_system::Trait {
 	type MessageDispatch: MessageDispatch<Self::InboundMessageFee, DispatchPayload = Self::InboundPayload>;
 }
 
-/// Shortcut to messages proof type for Trait.
+/// Shortcut to messages proof type for Trait
+// bear - Messages 的 proof.
 type MessagesProofOf<T, I> =
 	<<T as Trait<I>>::SourceHeaderChain as SourceHeaderChain<<T as Trait<I>>::InboundMessageFee>>::MessagesProof;
 /// Shortcut to messages delivery proof type for Trait.
+// bear - Message Delivery 的 proof
 type MessagesDeliveryProofOf<T, I> = <<T as Trait<I>>::TargetHeaderChain as TargetHeaderChain<
 	<T as Trait<I>>::OutboundPayload,
 	<T as frame_system::Trait>::AccountId,
@@ -172,11 +174,14 @@ decl_storage! {
 		pub ModuleOwner get(fn module_owner): Option<T::AccountId>;
 		/// If true, all pallet transactions are failed immediately.
 		pub IsHalted get(fn is_halted) config(): bool;
+
+		// store bound lanes
 		/// Map of lane id => inbound lane data.
 		pub InboundLanes: map hasher(blake2_128_concat) LaneId => InboundLaneData<T::InboundRelayer>;
 		/// Map of lane id => outbound lane data.
 		pub OutboundLanes: map hasher(blake2_128_concat) LaneId => OutboundLaneData;
 		/// All queued outbound messages.
+		// bear - send_message 方法最终的 message 会保存在这里
 		pub OutboundMessages: map hasher(blake2_128_concat) MessageKey => Option<MessageData<T::OutboundMessageFee>>;
 	}
 	add_extra_genesis {
@@ -248,6 +253,9 @@ decl_module! {
 
 		/// Send message over lane.
 		#[weight = 0] // TODO: update me (https://github.com/paritytech/parity-bridges-common/issues/78)
+		// bear - 发送消息
+		// 由 submit-millau-to-rialto-message 处调用
+		// 1. 先查看一下 payload message 是否在已经被发送到 target chain 了
 		pub fn send_message(
 			origin,
 			lane_id: LaneId,
@@ -258,6 +266,7 @@ decl_module! {
 			let submitter = origin.into().map_err(|_| BadOrigin)?;
 
 			// let's first check if message can be delivered to target chain
+			// 1. 主要是对 call 的长度，weight 大小进行校验
 			T::TargetHeaderChain::verify_message(&payload)
 				.map_err(|err| {
 					frame_support::debug::trace!(
@@ -270,6 +279,7 @@ decl_module! {
 				})?;
 
 			// now let's enforce any additional lane rules
+			// 2. 主要针对 call 中的 origin 进行校验，确定是否正确
 			T::LaneMessageVerifier::verify_message(
 				&submitter,
 				&delivery_and_dispatch_fee,
@@ -286,6 +296,7 @@ decl_module! {
 			})?;
 
 			// let's withdraw delivery and dispatch fee from submitter
+			// 扣除费用，包括 message delivery, message dispatch fee 等。
 			T::MessageDeliveryAndDispatchPayment::pay_delivery_and_dispatch_fee(
 				&submitter,
 				&delivery_and_dispatch_fee,
@@ -303,11 +314,13 @@ decl_module! {
 			})?;
 
 			// finally, save message in outbound storage and emit event
+			//
 			let mut lane = outbound_lane::<T, I>(lane_id);
 			let nonce = lane.send_message(MessageData {
 				payload: payload.encode(),
 				fee: delivery_and_dispatch_fee,
 			});
+			// 清理信息
 			lane.prune_messages(T::MaxMessagesToPruneAtOnce::get());
 
 			frame_support::debug::trace!(
@@ -316,6 +329,7 @@ decl_module! {
 				lane_id,
 			);
 
+			// 发送一个 event
 			Self::deposit_event(RawEvent::MessageAccepted(lane_id, nonce));
 
 			Ok(())
@@ -329,6 +343,8 @@ decl_module! {
 			)
 			.saturating_add(*dispatch_weight)
 		]
+		// Rio 收到 messages proof 之后的处理
+		//
 		pub fn receive_messages_proof(
 			origin,
 			relayer_id: T::InboundRelayer,
@@ -338,6 +354,7 @@ decl_module! {
 			ensure_operational::<T, I>()?;
 			let _ = ensure_signed(origin)?;
 
+			// 1. 校验 message 并解出来信息
 			// verify messages proof && convert proof into messages
 			let messages = verify_and_decode_messages_proof::<
 				T::SourceHeaderChain,
@@ -353,6 +370,7 @@ decl_module! {
 					Error::<T, I>::InvalidMessagesProof
 				})?;
 
+			// 2. 校验 weight 是要比实际消耗的多的
 			// verify that relayer is paying actual dispatch weight
 			let actual_dispatch_weight: Weight = messages
 				.values()
@@ -410,10 +428,12 @@ decl_module! {
 		}
 
 		/// Receive messages delivery proof from bridged chain.
+		// bear - 接受到 rio 的 message delivery proof
 		#[weight = 0] // TODO: update me (https://github.com/paritytech/parity-bridges-common/issues/78)
 		pub fn receive_messages_delivery_proof(origin, proof: MessagesDeliveryProofOf<T, I>) -> DispatchResult {
 			ensure_operational::<T, I>()?;
 
+			// 校验接收到的 proof
 			let confirmation_relayer = ensure_signed(origin)?;
 			let (lane_id, lane_data) = T::TargetHeaderChain::verify_messages_delivery_proof(proof).map_err(|err| {
 				frame_support::debug::trace!(
@@ -424,10 +444,13 @@ decl_module! {
 				Error::<T, I>::InvalidMessagesDeliveryProof
 			})?;
 
+			//
 			// mark messages as delivered
 			let mut lane = outbound_lane::<T, I>(lane_id);
 			let received_range = lane.confirm_delivery(lane_data.latest_received_nonce);
+
 			if let Some(received_range) = received_range {
+				// 这里有个日志
 				Self::deposit_event(RawEvent::MessagesDelivered(lane_id, received_range.0, received_range.1));
 				let relayer_fund_account = relayer_fund_account_id::<T, I>();
 
@@ -459,7 +482,7 @@ decl_module! {
 				lane_id,
 			);
 
-			Ok(())
+			8Ok(())
 		}
 	}
 }
@@ -528,6 +551,7 @@ pub mod storage_keys {
 	}
 
 	/// Storage key of the outbound message lane state in the runtime storage.
+	// 这个 storage_map_final_key 哪里来的
 	pub fn outbound_lane_data_key<I: Instance>(lane: &LaneId) -> StorageKey {
 		StorageKey(OutboundLanes::<I>::storage_map_final_key(*lane))
 	}
@@ -557,6 +581,7 @@ fn ensure_operational<T: Trait<I>, I: Instance>() -> Result<(), Error<T, I>> {
 }
 
 /// Creates new inbound lane object, backed by runtime storage.
+// 创建一个 incound lane 车道对象
 fn inbound_lane<T: Trait<I>, I: Instance>(lane_id: LaneId) -> InboundLane<RuntimeInboundLaneStorage<T, I>> {
 	InboundLane::new(RuntimeInboundLaneStorage {
 		lane_id,
@@ -566,6 +591,7 @@ fn inbound_lane<T: Trait<I>, I: Instance>(lane_id: LaneId) -> InboundLane<Runtim
 }
 
 /// Creates new outbound lane object, backed by runtime storage.
+// bear - 创建一个对外的车道对象
 fn outbound_lane<T: Trait<I>, I: Instance>(lane_id: LaneId) -> OutboundLane<RuntimeOutboundLaneStorage<T, I>> {
 	OutboundLane::new(RuntimeOutboundLaneStorage {
 		lane_id,
@@ -667,10 +693,12 @@ impl<T: Trait<I>, I: Instance> OutboundLaneStorage for RuntimeOutboundLaneStorag
 }
 
 /// Verify messages proof and return proved messages with decoded payload.
+// 校验从 receive_message_proof 拿到的 proof
 fn verify_and_decode_messages_proof<Chain: SourceHeaderChain<Fee>, Fee, DispatchPayload: Decode>(
 	proof: Chain::MessagesProof,
 	max_messages: MessageNonce,
 ) -> Result<ProvedMessages<DispatchMessage<DispatchPayload, Fee>>, Chain::Error> {
+	// 最终会调用到 message.rs 里的 verify_message_proof
 	Chain::verify_messages_proof(proof, max_messages).map(|messages_by_lane| {
 		messages_by_lane
 			.into_iter()

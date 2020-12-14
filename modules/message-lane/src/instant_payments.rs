@@ -36,6 +36,7 @@ where
 {
 	type Error = &'static str;
 
+	// bear - 从 send_message 处调用过来
 	fn pay_delivery_and_dispatch_fee(
 		submitter: &Sender<AccountId>,
 		fee: &Currency::Balance,

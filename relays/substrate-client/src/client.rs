@@ -185,6 +185,9 @@ impl<C: Chain> Client<C> {
 	/// Submit an extrinsic for inclusion in a block.
 	///
 	/// Note: The given transaction does not need be SCALE encoded beforehand.
+	// bear - 调用处：
+	// 1. cli::Command::SubmitMillauToRialtoMessage 处 call 转发调用
+	// 2. message_target submit_messages_proof 处，提交 message proof
 	pub async fn submit_extrinsic(&self, transaction: Bytes) -> Result<C::Hash> {
 		let tx_hash = Substrate::<C, _, _>::author_submit_extrinsic(&self.client, transaction).await?;
 		log::trace!(target: "bridge", "Sent transaction to Substrate node: {:?}", tx_hash);
@@ -210,6 +213,8 @@ impl<C: Chain> Client<C> {
 	}
 
 	/// Returns proof-of-message(s) in given inclusive range.
+	// bear
+	// 这里会前往 runtime 调用，获取到 proof
 	pub async fn prove_messages(
 		&self,
 		instance: InstanceId,

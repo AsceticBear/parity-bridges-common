@@ -32,6 +32,8 @@ use relay_utils::FailedClient;
 use std::{collections::BTreeMap, marker::PhantomData, ops::RangeInclusive, time::Duration};
 
 /// Run message delivery race.
+// bear - 转发消息
+// 从 message_lane_loop.rs 调用过来，前往 message_race_loop
 pub async fn run<P: MessageLane>(
 	source_client: impl MessageLaneSourceClient<P>,
 	source_state_updates: impl FusedStream<Item = SourceClientState<P>>,
@@ -41,6 +43,7 @@ pub async fn run<P: MessageLane>(
 	metrics_msg: Option<MessageLaneLoopMetrics>,
 	params: MessageDeliveryParams,
 ) -> Result<(), FailedClient> {
+	// 1.
 	crate::message_race_loop::run(
 		MessageDeliveryRaceSource {
 			client: source_client,
@@ -134,6 +137,8 @@ where
 		))
 	}
 
+	// bear - 产生 message 的 proof
+	// 会在 dilivery message 的时候用到
 	async fn generate_proof(
 		&self,
 		at_block: SourceHeaderIdOf<P>,
@@ -185,6 +190,7 @@ where
 		))
 	}
 
+	// 向 target client 提交 proof
 	async fn submit_proof(
 		&self,
 		generated_at_block: SourceHeaderIdOf<P>,

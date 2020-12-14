@@ -19,6 +19,8 @@
 //! to submit to the target chain? The context makes decisions basing on parameters
 //! passed using `HeadersSyncParams` structure.
 
+// bear 控制 sync headers 的节奏
+
 use crate::headers::QueuedHeaders;
 use crate::sync_types::{HeaderIdOf, HeaderStatus, HeadersSyncPipeline, QueuedHeader};
 use num_traits::{One, Saturating, Zero};

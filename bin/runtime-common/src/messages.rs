@@ -160,6 +160,13 @@ pub mod source {
 	{
 		type Error = &'static str;
 
+		// LaneMessageVerifier 检查
+		// 调用处：
+		// 1. message-lane send message 处
+		// 2.
+		// 流程：
+		// 1. 先使用 pallet bridge call dispatch check origin
+		// 2. 检查 fee 够不够用
 		fn verify_message(
 			submitter: &Sender<AccountIdOf<ThisChain<B>>>,
 			delivery_and_dispatch_fee: &BalanceOf<ThisChain<B>>,
@@ -391,6 +398,7 @@ pub mod target {
 	}
 
 	/// Verify proof of Bridged -> This chain messages.
+	// Runtime 里 receive message proof, 解析到最后，就到了这里
 	pub fn verify_messages_proof<B: MessageBridge, ThisRuntime>(
 		proof: FromBridgedChainMessagesProof<B>,
 		max_messages: MessageNonce,
@@ -480,6 +488,7 @@ pub mod target {
 	}
 
 	/// Verify proof of Bridged -> This chain messages using given message proof parser.
+	// bear - 解析 proof
 	pub(crate) fn verify_messages_proof_with_parser<B: MessageBridge, BuildParser, Parser>(
 		proof: FromBridgedChainMessagesProof<B>,
 		max_messages: MessageNonce,
