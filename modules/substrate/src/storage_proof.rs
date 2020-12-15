@@ -42,6 +42,7 @@ where
 	/// Constructs a new storage proof checker.
 	///
 	/// This returns an error if the given proof is invalid with respect to the given root.
+	// bear - 新建 StorageProofChecker
 	pub fn new(root: H::Out, proof: StorageProof) -> Result<Self, Error> {
 		let db = proof.into_memory_db();
 		if !db.contains(&root, EMPTY_PREFIX) {

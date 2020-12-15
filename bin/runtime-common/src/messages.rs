@@ -386,6 +386,7 @@ pub mod target {
 				.unwrap_or(0)
 		}
 
+		// bear - ria 侧，接受到 message 后，在这里进行分发
 		fn dispatch(message: DispatchMessage<Self::DispatchPayload, BalanceOf<BridgedChain<B>>>) {
 			if let Ok(payload) = message.data.payload {
 				pallet_bridge_call_dispatch::Module::<ThisRuntime, ThisCallDispatchInstance>::dispatch(
@@ -453,11 +454,13 @@ pub mod target {
 		}
 	}
 
+	// 检查 message proof 的
 	pub(crate) trait MessageProofParser {
 		fn read_raw_outbound_lane_data(&self, lane_id: &LaneId) -> Option<Vec<u8>>;
 		fn read_raw_message(&self, message_key: &MessageKey) -> Option<Vec<u8>>;
 	}
 
+	// StorageProof Check 适配器
 	struct StorageProofCheckerAdapter<H: Hasher, B, ThisRuntime> {
 		storage: StorageProofChecker<H>,
 		_dummy: sp_std::marker::PhantomData<(B, ThisRuntime)>,

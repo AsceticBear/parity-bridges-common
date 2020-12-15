@@ -310,6 +310,7 @@ impl<T: Trait> Module<T> {
 	}
 
 	/// Check if a particular header is known to the bridge pallet.
+	// bear - 调用 storage header exist 方法查询，块头是否存在
 	pub fn is_known_header(hash: BridgedBlockHash<T>) -> bool {
 		frame_support::debug::info!("bear(rpc) is_known_header {:?}", hash);
 		PalletStorage::<T>::new().header_exists(hash)
@@ -513,6 +514,8 @@ impl<T: Trait> BridgeStorage for PalletStorage<T> {
 	type Header = BridgedHeader<T>;
 
 	// bear - 往 pallet storage 中写存储内容
+	// 1. 在 verifier 最后调用
+	// 2. 在 import_finality_proof 最后调用。
 	fn write_header(&mut self, header: &ImportedHeader<BridgedHeader<T>>) {
 		use core::cmp::Ordering;
 

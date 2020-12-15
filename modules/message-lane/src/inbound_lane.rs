@@ -96,6 +96,7 @@ impl<S: InboundLaneStorage> InboundLane<S> {
 		nonce: MessageNonce,
 		message_data: DispatchMessageData<P::DispatchPayload, S::MessageFee>,
 	) -> bool {
+		// 校验 nonce 值是否正确
 		let mut data = self.storage.data();
 		let is_correct_message = nonce == data.latest_received_nonce + 1;
 		if !is_correct_message {
@@ -128,6 +129,7 @@ impl<S: InboundLaneStorage> InboundLane<S> {
 
 		self.storage.set_data(data);
 
+		// 分发消息
 		P::dispatch(DispatchMessage {
 			key: MessageKey {
 				lane_id: self.storage.id(),

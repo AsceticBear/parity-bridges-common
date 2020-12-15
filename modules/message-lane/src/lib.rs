@@ -412,6 +412,7 @@ decl_module! {
 					debug_assert_eq!(message.key.lane_id, lane_id);
 
 					total_messages += 1;
+					// 统计有效信息数，并分发消息
 					if lane.receive_message::<T::MessageDispatch>(relayer_id.clone(), message.key.nonce, message.data) {
 						valid_messages += 1;
 					}

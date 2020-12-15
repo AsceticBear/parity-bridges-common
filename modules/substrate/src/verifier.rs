@@ -129,7 +129,7 @@ where
 			return Err(ImportError::HeaderAlreadyExists);
 		}
 
-		// 3. 这一点很重要，要能在 storage 中查找到 parent
+		// 3. 这一点很重要，要能在 storage 中查找到 parent，保证了区块头的连续
 		let parent_header = self
 			.storage
 			.header_by_hash(*header.parent_hash())

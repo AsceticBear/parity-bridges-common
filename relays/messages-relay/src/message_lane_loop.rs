@@ -196,6 +196,7 @@ pub type SourceClientState<P> = ClientState<SourceHeaderIdOf<P>, TargetHeaderIdO
 pub type TargetClientState<P> = ClientState<TargetHeaderIdOf<P>, SourceHeaderIdOf<P>>;
 
 /// Both clients state.
+
 #[derive(Debug, Default)]
 pub struct ClientsState<P: MessageLane> {
 	/// Source client state.

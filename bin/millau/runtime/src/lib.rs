@@ -550,6 +550,7 @@ impl_runtime_apis! {
 			BridgeRialto::require_justifications()
 		}
 
+		// bear - 直接调用桥 pallet 中的方法
 		fn is_known_block(hash: bp_rialto::Hash) -> bool {
 			BridgeRialto::is_known_header(hash)
 		}
