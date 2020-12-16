@@ -78,8 +78,11 @@ impl<S: OutboundLaneStorage> OutboundLane<S> {
 	///
 	/// Returns `None` if confirmation is wrong/duplicate.
 	/// Returns `Some` with inclusive ranges of message nonces that have been received.
+	// 修改 
 	pub fn confirm_delivery(&mut self, latest_received_nonce: MessageNonce) -> Option<(MessageNonce, MessageNonce)> {
 		let mut data = self.storage.data();
+		// 如果接收到的 latest_received_nonce < latest_received_nonce, 说明重复了
+		// 如果 latest_received_nonce > latest_generated_nonce, 不可能的，确认的肯定要小于刚刚产生的
 		if latest_received_nonce <= data.latest_received_nonce || latest_received_nonce > data.latest_generated_nonce {
 			return None;
 		}

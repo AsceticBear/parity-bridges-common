@@ -103,6 +103,7 @@ where
 		.await
 	}
 
+	// 从 rpc 查询到 latest_generated_nonce
 	async fn latest_generated_nonce(
 		&self,
 		id: SourceHeaderIdOf<P>,

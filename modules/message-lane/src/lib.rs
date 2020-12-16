@@ -177,8 +177,10 @@ decl_storage! {
 
 		// store bound lanes
 		/// Map of lane id => inbound lane data.
+		// 
 		pub InboundLanes: map hasher(blake2_128_concat) LaneId => InboundLaneData<T::InboundRelayer>;
 		/// Map of lane id => outbound lane data.
+		// OutboundLane 的 nonce 信息维护
 		pub OutboundLanes: map hasher(blake2_128_concat) LaneId => OutboundLaneData;
 		/// All queued outbound messages.
 		// bear - send_message 方法最终的 message 会保存在这里
@@ -445,14 +447,15 @@ decl_module! {
 				Error::<T, I>::InvalidMessagesDeliveryProof
 			})?;
 
-			//
 			// mark messages as delivered
 			let mut lane = outbound_lane::<T, I>(lane_id);
+			// 更新 OutboundLanes 的 info 信息, 并返回一个确认区间
 			let received_range = lane.confirm_delivery(lane_data.latest_received_nonce);
 
 			if let Some(received_range) = received_range {
 				// 这里有个日志
 				Self::deposit_event(RawEvent::MessagesDelivered(lane_id, received_range.0, received_range.1));
+				
 				let relayer_fund_account = relayer_fund_account_id::<T, I>();
 
 				// reward relayers that have delivered messages

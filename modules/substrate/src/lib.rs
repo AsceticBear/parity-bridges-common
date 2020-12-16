@@ -354,6 +354,7 @@ impl<T: Trait> Module<T> {
 		parse: impl FnOnce(StorageProofChecker<BridgedBlockHasher<T>>) -> R,
 	) -> Result<R, sp_runtime::DispatchError> {
 		let storage = PalletStorage::<T>::new();
+		// header 必须是 finalized
 		let header = storage
 			.header_by_hash(finalized_header_hash)
 			.ok_or(Error::<T>::UnknownHeader)?;

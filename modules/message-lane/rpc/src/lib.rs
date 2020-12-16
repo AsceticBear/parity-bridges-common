@@ -106,7 +106,7 @@ where
 	R: Runtime,
 {
 	// message lane pallet 证明消息的存在
-	//
+	// 传入参数有 begin, end 表示一个范围
 	fn prove_messages(
 		&self,
 		instance: InstanceId,
@@ -167,15 +167,17 @@ where
 	Block: BlockT,
 	Backend: BackendT<Block> + 'static,
 {
-	//
+	// 根据 hash 找 block
 	let block = unwrap_or_best(&*backend, block);
+	// 从 backend 里读取 state
 	let state = backend.state_at(BlockId::Hash(block)).map_err(blockchain_err)?;
+	// key 也要重新组合一下
 	let keys = keys
 		.into_iter()
 		.map(|key| key.ok_or(Error::UnknownInstance).map(|key| key.0))
 		.collect::<Result<Vec<_>, _>>()?;
 
-	// 从 state 里读出 keys 对应的 proof
+	// 从 state 里读出 keys 对应的 proof， 直接调用 state machine 里的函数
 	let storage_proof = prove_read(state, keys)
 		.map_err(BlockchainError::Execution)
 		.map_err(blockchain_err)?;

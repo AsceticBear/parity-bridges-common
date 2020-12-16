@@ -501,10 +501,12 @@ pub mod target {
 		BuildParser: FnOnce(HashOf<BridgedChain<B>>, StorageProof) -> Result<Parser, MessageProofError>,
 		Parser: MessageProofParser,
 	{
+		// 先把 proof 中包含的字段拿出来
 		let (bridged_header_hash, bridged_storage_proof, lane_id, begin, end) = proof;
 
 		// receiving proofs where end < begin is ok (if proof includes outbound lane state)
 		// => hence unwrap_or(0)
+		// 同一个 proof 里，可能包含多个 message 
 		let messages_in_the_proof = end.checked_sub(begin).and_then(|diff| diff.checked_add(1)).unwrap_or(0);
 		if messages_in_the_proof > max_messages {
 			return Err(MessageProofError::TooManyMessages);

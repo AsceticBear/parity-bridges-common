@@ -66,6 +66,7 @@ pub enum CallOrigin<SourceChainAccountId, TargetChainAccountPublic, TargetChainS
 	/// The account can be identified by `TargetChainAccountPublic`. The proof that the
 	/// `SourceChainAccountId` controls `TargetChainAccountPublic` is the `TargetChainSignature`
 	/// over `(Call, SourceChainAccountId).encode()`.
+	// bear - TargetChainSignature 用来证明 SourceChainAccountId 控制者 TargetChainAccountPublic
 	TargetAccount(SourceChainAccountId, TargetChainAccountPublic, TargetChainSignature),
 
 	/// Call is sent by the `SourceChainAccountId` on the source chain. On the target chain it is
@@ -123,6 +124,7 @@ pub trait Trait<I = DefaultInstance>: frame_system::Trait {
 }
 
 decl_storage! {
+	// bear - call-dispatch 这里不需要存储任何东西
 	trait Store for Module<T: Trait<I>, I: Instance = DefaultInstance> as CallDispatch {}
 }
 
@@ -219,6 +221,7 @@ impl<T: Trait<I>, I: Instance> MessageDispatch<T::MessageId> for Module<T, I> {
 				T::AccountIdConverter::convert(encoded_id)
 			}
 			CallOrigin::TargetAccount(source_account_id, target_public, target_signature) => {
+				// 这里稍微复杂一些
 				let mut signed_message = Vec::new();
 				message.call.encode_to(&mut signed_message);
 				source_account_id.encode_to(&mut signed_message);
@@ -271,6 +274,7 @@ impl<T: Trait<I>, I: Instance> MessageDispatch<T::MessageId> for Module<T, I> {
 /// For example, if a message is sent from a "regular" account on the source chain it will not be
 /// allowed to be dispatched as Root on the target chain. This is a useful check to do on the source
 /// chain _before_ sending a message whose dispatch will be rejected on the target chain.
+// bear - relay 到 target chain 上的消息，进行鉴权
 pub fn verify_message_origin<SourceChainAccountId, TargetChainAccountPublic, TargetChainSignature, Call>(
 	sender_origin: &RawOrigin<SourceChainAccountId>,
 	message: &MessagePayload<SourceChainAccountId, TargetChainAccountPublic, TargetChainSignature, Call>,
