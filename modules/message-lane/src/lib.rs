@@ -724,6 +724,7 @@ fn verify_and_decode_messages_proof<Chain: SourceHeaderChain<Fee>, Fee, Dispatch
 ///
 /// This account stores all the fees paid by submitters. Relayers are able to claim these
 /// funds as at their convenience.
+// 创建了一个公共 fund 账户，消息通信的费用都保存在这里
 fn relayer_fund_account_id<T: Trait<I>, I: Instance>() -> T::AccountId {
 	use sp_runtime::traits::Convert;
 	let encoded_id = bp_runtime::derive_relayer_fund_account_id(bp_runtime::NO_INSTANCE_ID);

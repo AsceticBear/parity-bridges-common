@@ -191,6 +191,7 @@ pub mod source {
 	}
 
 	/// Return maximal message size of This -> Bridged chain message.
+	// message 的最大值为 target chain block 能包含的 exrisic size 的 2/3
 	pub fn maximal_message_size<B: MessageBridge>() -> u32 {
 		B::maximal_extrinsic_size_on_target_chain() / 3 * 2
 	}
@@ -518,6 +519,7 @@ pub mod target {
 		// be in the proof. So any error in `read_value`, or even missing value is fatal.
 		//
 		// Mind that we allow proofs with no messages if outbound lane state is proved.
+		// bear - 使用 parser 读取 begin-end 之间的所有 message 内容
 		let mut messages = Vec::with_capacity(end.saturating_sub(begin) as _);
 		for nonce in begin..=end {
 			let message_key = MessageKey { lane_id, nonce };

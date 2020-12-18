@@ -115,8 +115,10 @@ impl<S: InboundLaneStorage> InboundLane<S> {
 			return false;
 		}
 
+		// 更新 latest_received_nonce
 		data.latest_received_nonce = nonce;
 
+		// 更新 relayer list
 		let push_new = match data.relayers.back_mut() {
 			Some((_, nonce_high, last_relayer)) if last_relayer == &relayer => {
 				*nonce_high = nonce;
