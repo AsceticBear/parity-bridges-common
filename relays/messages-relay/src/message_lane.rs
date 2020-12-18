@@ -23,6 +23,7 @@ use relay_utils::{BlockNumberBase, HeaderId};
 use std::fmt::Debug;
 
 /// One-way message lane.
+// bear - MessageLane 的 trait，仅仅包括了一些 associated type
 pub trait MessageLane: Clone + Send + Sync {
 	/// Name of the messages source.
 	const SOURCE_NAME: &'static str;

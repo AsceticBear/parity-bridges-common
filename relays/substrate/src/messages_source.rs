@@ -103,6 +103,7 @@ where
 		.await
 	}
 
+	// 从 rpc 查询到 latest_generated_nonce
 	async fn latest_generated_nonce(
 		&self,
 		id: SourceHeaderIdOf<P>,
@@ -157,6 +158,7 @@ where
 		)
 	}
 
+	// 从 message_race_delivery.rs -> message_source.rs -> substrate-client.rs - Runtime
 	async fn prove_messages(
 		&self,
 		id: SourceHeaderIdOf<P>,
@@ -177,6 +179,7 @@ where
 		Ok((id, nonces, (proof_parameters.dispatch_weight, proof)))
 	}
 
+	// 传回去
 	async fn submit_messages_receiving_proof(
 		&self,
 		generated_at_block: TargetHeaderIdOf<P>,

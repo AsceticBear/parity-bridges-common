@@ -32,6 +32,9 @@ use sp_runtime::traits::IdentifyAccount;
 /// Kusama node client.
 pub type KusamaClient = relay_substrate_client::Client<Kusama>;
 /// Millau node client.
+
+// bear:
+// 实例化了两个客户端， MillauClient, RialtoClient 两部分
 pub type MillauClient = relay_substrate_client::Client<Millau>;
 /// Rialto node client.
 pub type RialtoClient = relay_substrate_client::Client<Rialto>;
@@ -50,6 +53,7 @@ mod rialto_headers_to_millau;
 mod rialto_messages_to_millau;
 
 fn main() {
+	// 设置 log 日志级别
 	initialize_relay();
 
 	let result = async_std::task::block_on(run_command(cli::parse_args()));
@@ -60,12 +64,14 @@ fn main() {
 
 async fn run_command(command: cli::Command) -> Result<(), String> {
 	match command {
+		// bear - 初始化桥连接
 		cli::Command::InitializeMillauHeadersBridgeInRialto {
 			millau,
 			rialto,
 			rialto_sign,
 			millau_bridge_params,
 		} => {
+			// new MillauClient，RialtoClient 对象
 			let millau_client = MillauClient::new(ConnectionParams {
 				host: millau.millau_host,
 				port: millau.millau_port,
@@ -76,11 +82,15 @@ async fn run_command(command: cli::Command) -> Result<(), String> {
 				port: rialto.rialto_port,
 			})
 			.await?;
+
+			// 获得 substrate transaction signer
 			let rialto_sign = RialtoSigningParams::from_suri(
 				&rialto_sign.rialto_signer,
 				rialto_sign.rialto_signer_password.as_deref(),
 			)
 			.map_err(|e| format!("Failed to parse rialto-signer: {:?}", e))?;
+
+			// 获取到 signer 的 nonce
 			let rialto_signer_next_index = rialto_client
 				.next_account_index(rialto_sign.signer.public().into())
 				.await?;
@@ -88,9 +98,11 @@ async fn run_command(command: cli::Command) -> Result<(), String> {
 			headers_initialize::initialize(
 				millau_client,
 				rialto_client.clone(),
+				// 以下三项可能为 None
 				millau_bridge_params.millau_initial_header,
 				millau_bridge_params.millau_initial_authorities,
 				millau_bridge_params.millau_initial_authorities_set_id,
+				// 向 Rialto chain 发送一个 sudo 的 tx，用来 init bridge
 				move |initialization_data| {
 					Ok(Bytes(
 						Rialto::sign_transaction(
@@ -108,12 +120,14 @@ async fn run_command(command: cli::Command) -> Result<(), String> {
 			)
 			.await;
 		}
+		// bear - relay millau header 到 rialto
 		cli::Command::MillauHeadersToRialto {
 			millau,
 			rialto,
 			rialto_sign,
 			prometheus_params,
 		} => {
+			// 1. 获取到连接的参数，构造出连接 client 对象
 			let millau_client = MillauClient::new(ConnectionParams {
 				host: millau.millau_host,
 				port: millau.millau_port,
@@ -124,11 +138,13 @@ async fn run_command(command: cli::Command) -> Result<(), String> {
 				port: rialto.rialto_port,
 			})
 			.await?;
+
 			let rialto_sign = RialtoSigningParams::from_suri(
 				&rialto_sign.rialto_signer,
 				rialto_sign.rialto_signer_password.as_deref(),
 			)
 			.map_err(|e| format!("Failed to parse rialto-signer: {:?}", e))?;
+			// 2. 把程序运行起来
 			millau_headers_to_rialto::run(millau_client, rialto_client, rialto_sign, prometheus_params.into()).await;
 		}
 		cli::Command::InitializeRialtoHeadersBridgeInMillau {
@@ -203,6 +219,7 @@ async fn run_command(command: cli::Command) -> Result<(), String> {
 
 			rialto_headers_to_millau::run(rialto_client, millau_client, millau_sign, prometheus_params.into()).await;
 		}
+		// bear - Message relay 传递就靠它了
 		cli::Command::MillauMessagesToRialto {
 			millau,
 			millau_sign,
@@ -211,6 +228,7 @@ async fn run_command(command: cli::Command) -> Result<(), String> {
 			prometheus_params,
 			lane,
 		} => {
+			// 两个客户端先建立好
 			let millau_client = MillauClient::new(ConnectionParams {
 				host: millau.millau_host,
 				port: millau.millau_port,
@@ -221,6 +239,7 @@ async fn run_command(command: cli::Command) -> Result<(), String> {
 				millau_sign.millau_signer_password.as_deref(),
 			)
 			.map_err(|e| format!("Failed to parse millau-signer: {:?}", e))?;
+			
 			let rialto_client = RialtoClient::new(ConnectionParams {
 				host: rialto.rialto_host,
 				port: rialto.rialto_port,
@@ -241,6 +260,8 @@ async fn run_command(command: cli::Command) -> Result<(), String> {
 				prometheus_params.into(),
 			);
 		}
+
+		// Message 本来是要前往 ria 的，但是要先发送到 millau 上。
 		cli::Command::SubmitMillauToRialtoMessage {
 			millau,
 			millau_sign,
@@ -251,6 +272,7 @@ async fn run_command(command: cli::Command) -> Result<(), String> {
 			origin,
 			..
 		} => {
+			// 1. MillauClient 客户端
 			let millau_client = MillauClient::new(ConnectionParams {
 				host: millau.millau_host,
 				port: millau.millau_port,
@@ -261,12 +283,17 @@ async fn run_command(command: cli::Command) -> Result<(), String> {
 				millau_sign.millau_signer_password.as_deref(),
 			)
 			.map_err(|e| format!("Failed to parse millau-signer: {:?}", e))?;
+
+			// 2. Rialto SigningParams
 			let rialto_sign = RialtoSigningParams::from_suri(
 				&rialto_sign.rialto_signer,
 				rialto_sign.rialto_signer_password.as_deref(),
 			)
 			.map_err(|e| format!("Failed to parse rialto-signer: {:?}", e))?;
 
+			// 这里直接调用了 SystemCall 中的 Remark 方法，模拟一个 原本要发生在 ria 上的 call， 先发送到 M 上的节点，然后由 relayer relay 到 rialto 的 call
+
+			//  发生在 M 节点上
 			let rialto_call = match message {
 				cli::ToRialtoMessage::Remark => rialto_runtime::Call::System(rialto_runtime::SystemCall::remark(
 					format!(
@@ -316,6 +343,7 @@ async fn run_command(command: cli::Command) -> Result<(), String> {
 							rialto_origin_public.into(),
 							rialto_origin_signature.into(),
 						),
+						// rialto 的 call 要被打包进去一个 millau call 中，由 millau 提交。
 						call: rialto_call.encode(),
 					}
 				}
@@ -334,10 +362,12 @@ async fn run_command(command: cli::Command) -> Result<(), String> {
 				millau_call,
 			);
 
+			// 这个 call 要先发送到 millau node, 再由 relayer 转移到 ria node.
 			millau_client
 				.submit_extrinsic(Bytes(signed_millau_call.encode()))
 				.await?;
 		}
+
 		cli::Command::RialtoMessagesToMillau {
 			rialto,
 			rialto_sign,

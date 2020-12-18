@@ -70,6 +70,7 @@ pub trait HeadersSyncPipeline: Clone + Send + Sync {
 	/// 4) header and completion data are submitted in separate transactions.
 	///
 	/// Example: Substrate GRANDPA justifications.
+	// bear - 这里很重要
 	type Completion: Clone + Send + Sync + std::fmt::Debug;
 
 	/// Function used to estimate size of target-encoded header.
@@ -119,6 +120,7 @@ impl<P: HeadersSyncPipeline> Deref for QueuedHeader<P> {
 }
 
 /// Header how it's stored in the synchronization queue.
+// bear - 同步 header 类型
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct QueuedHeaderData<P: HeadersSyncPipeline> {
 	header: P::Header,

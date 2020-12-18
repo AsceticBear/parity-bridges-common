@@ -36,6 +36,7 @@ where
 {
 	type Error = &'static str;
 
+	// bear - 从 send_message 处调用过来，扣除 submiter 的部分钱给 relayer 公共账户
 	fn pay_delivery_and_dispatch_fee(
 		submitter: &Sender<AccountId>,
 		fee: &Currency::Balance,
@@ -53,6 +54,7 @@ where
 		}
 	}
 
+	// bear - 收到 proof 之后，给 repayer 支付一笔费用
 	fn pay_relayer_reward(
 		_confirmation_relayer: &AccountId,
 		relayer: &AccountId,

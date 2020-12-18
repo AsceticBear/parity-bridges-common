@@ -97,9 +97,17 @@ decl_storage! {
 		/// require a Grandpa justification.
 		RequiresJustification: map hasher(identity) BridgedBlockHash<T> => BridgedBlockNumber<T>;
 		/// Headers which have been imported into the pallet.
+		// bear - 记录 import 到 substrate light client pallet 的存储块头
 		ImportedHeaders: map hasher(identity) BridgedBlockHash<T> => Option<ImportedHeader<BridgedHeader<T>>>;
+		
+		// bear:
+		// ImportedHeaderHash: map hasher(identity) hash -> (hash -> number);
+		// import_signed_header 的时候，采取每个块都进行 relay 的策略，区别在于不保存实际存在的 header，只保存 header 对应的 hash，减轻 client 侧的存储压力。
+		//  这种方式还是不太行，不可取。和不保存区块的意思是一样的。
+
 		/// The current Grandpa Authority set.
 		CurrentAuthoritySet: AuthoritySet;
+		// bear - 不理解这里
 		/// The next scheduled authority set change for a given fork.
 		///
 		/// The fork is indicated by the header which _signals_ the change (key in the mapping).
@@ -107,6 +115,7 @@ decl_storage! {
 		// Grandpa doesn't require there to always be a pending change. In fact, most of the time
 		// there will be no pending change available.
 		NextScheduledChange: map hasher(identity) BridgedBlockHash<T> => Option<ScheduledChange<BridgedBlockNumber<T>>>;
+		// bear - 这两项先不用管，是治理相关的
 		/// Optional pallet owner.
 		///
 		/// Pallet owner has a right to halt all pallet operations and then resume it. If it is
@@ -164,6 +173,8 @@ decl_module! {
 		/// This will perform some basic checks to make sure it is fine to
 		/// import into the runtime. However, it does not perform any checks
 		/// related to finality.
+		// bear - 插入一个 signed header
+		// 1. 先校验签名等，然后插入到存储中
 		// TODO: Update weights [#78]
 		#[weight = 0]
 		pub fn import_signed_header(
@@ -172,7 +183,7 @@ decl_module! {
 		) -> DispatchResult {
 			ensure_operational::<T>()?;
 			let _ = ensure_signed(origin)?;
-			frame_support::debug::trace!("Got header {:?}", header);
+			frame_support::debug::info!("bear(import_signed_header) - import_signed_header {:?}", header);
 
 			let mut verifier = verifier::Verifier {
 				storage: PalletStorage::<T>::new(),
@@ -199,7 +210,7 @@ decl_module! {
 		) -> DispatchResult {
 			ensure_operational::<T>()?;
 			let _ = ensure_signed(origin)?;
-			frame_support::debug::trace!("Got header hash {:?}", hash);
+			frame_support::debug::info!("beaar(finalize_header) - finalize_header {:?}", hash);
 
 			let mut verifier = verifier::Verifier {
 				storage: PalletStorage::<T>::new(),
@@ -221,6 +232,10 @@ decl_module! {
 		/// This function is only allowed to be called from a trusted origin and writes to storage
 		/// with practically no checks in terms of the validity of the data. It is important that
 		/// you ensure that valid data is being passed in.
+
+		// bear - 从 relay call 过来的
+		// 1. 校验各种权限
+		// 2.
 		//TODO: Update weights [#78]
 		#[weight = 0]
 		pub fn initialize(
@@ -296,11 +311,14 @@ impl<T: Trait> Module<T> {
 	/// pallet should be confident that any transactions that were
 	/// included in this or any previous header will not be reverted.
 	pub fn best_finalized() -> BridgedHeader<T> {
+		frame_support::debug::info!("bear(rpc) best_finalized");
 		PalletStorage::<T>::new().best_finalized_header().header
 	}
 
 	/// Check if a particular header is known to the bridge pallet.
+	// bear - 调用 storage header exist 方法查询，块头是否存在
 	pub fn is_known_header(hash: BridgedBlockHash<T>) -> bool {
+		frame_support::debug::info!("bear(rpc) is_known_header {:?}", hash);
 		PalletStorage::<T>::new().header_exists(hash)
 	}
 
@@ -311,6 +329,7 @@ impl<T: Trait> Module<T> {
 	// once we track forks since there could be an older header on a
 	// different fork which isn't an ancestor of our best finalized header.
 	pub fn is_finalized_header(hash: BridgedBlockHash<T>) -> bool {
+		frame_support::debug::info!("bear(rpc) is_finalized_header {:?}", hash);
 		let storage = PalletStorage::<T>::new();
 		if let Some(header) = storage.header_by_hash(hash) {
 			header.is_finalized
@@ -323,6 +342,7 @@ impl<T: Trait> Module<T> {
 	///
 	/// These headers require proofs because they enact authority set changes.
 	pub fn require_justifications() -> Vec<(BridgedBlockNumber<T>, BridgedBlockHash<T>)> {
+		frame_support::debug::info!("bear(rpc) require_justifications");
 		PalletStorage::<T>::new()
 			.missing_justifications()
 			.iter()
@@ -333,12 +353,14 @@ impl<T: Trait> Module<T> {
 	/// Verify that the passed storage proof is valid, given it is crafted using
 	/// known finalized header. If the proof is valid, then the `parse` callback
 	/// is called and the function returns its result.
+	// 校验 message delivery proof 的过程
 	pub fn parse_finalized_storage_proof<R>(
 		finalized_header_hash: BridgedBlockHash<T>,
 		storage_proof: StorageProof,
 		parse: impl FnOnce(StorageProofChecker<BridgedBlockHasher<T>>) -> R,
 	) -> Result<R, sp_runtime::DispatchError> {
 		let storage = PalletStorage::<T>::new();
+		// header 必须是 finalized
 		let header = storage
 			.header_by_hash(finalized_header_hash)
 			.ok_or(Error::<T>::UnknownHeader)?;
@@ -346,6 +368,7 @@ impl<T: Trait> Module<T> {
 			return Err(Error::<T>::UnfinalizedHeader.into());
 		}
 
+		// 这里需要用到 header state root
 		let storage_proof_checker =
 			StorageProofChecker::new(*header.state_root(), storage_proof).map_err(Error::<T>::from)?;
 		Ok(parse(storage_proof_checker))
@@ -373,6 +396,7 @@ fn ensure_operational<T: Trait>() -> Result<(), Error<T>> {
 /// Since this writes to storage with no real checks this should only be used in functions that were
 /// called by a trusted origin.
 fn initialize_bridge<T: Trait>(init_params: InitializationData<BridgedHeader<T>>) {
+	// 1. 解析出数据
 	let InitializationData {
 		header,
 		authority_list,
@@ -381,8 +405,10 @@ fn initialize_bridge<T: Trait>(init_params: InitializationData<BridgedHeader<T>>
 		is_halted,
 	} = init_params;
 
+	// 2. 初始化 hash
 	let initial_hash = header.hash();
 
+	// TODO: 啥时候用
 	let mut signal_hash = None;
 	if let Some(ref change) = scheduled_change {
 		assert!(
@@ -394,14 +420,18 @@ fn initialize_bridge<T: Trait>(init_params: InitializationData<BridgedHeader<T>>
 		<NextScheduledChange<T>>::insert(initial_hash, change);
 	};
 
+	// 更新存储
 	<BestHeight<T>>::put(header.number());
+	// 注意这里是个数组形式
 	<BestHeaders<T>>::put(vec![initial_hash]);
 	<BestFinalized<T>>::put(initial_hash);
 
+	// 更新 authority set
 	let authority_set = AuthoritySet::new(authority_list, set_id);
 	CurrentAuthoritySet::put(authority_set);
 
 	<ImportedHeaders<T>>::insert(
+		// 更新 imported Headers，注意：这里的 require_justification = false, is_finalized = true
 		initial_hash,
 		ImportedHeader {
 			header,
@@ -491,6 +521,9 @@ impl<T> PalletStorage<T> {
 impl<T: Trait> BridgeStorage for PalletStorage<T> {
 	type Header = BridgedHeader<T>;
 
+	// bear - 往 pallet storage 中写存储内容
+	// 1. 在 verifier 最后调用
+	// 2. 在 import_finality_proof 最后调用。
 	fn write_header(&mut self, header: &ImportedHeader<BridgedHeader<T>>) {
 		use core::cmp::Ordering;
 
@@ -498,6 +531,9 @@ impl<T: Trait> BridgeStorage for PalletStorage<T> {
 		let current_height = header.number();
 		let best_height = <BestHeight<T>>::get();
 
+		// bear - 比对高度
+		// 1. 如果和现有 BestHeight 高度一样，那说明可能是分叉块，需要更新 BestHeaders
+		// 2. 如果大于现有的 BestHeight, 需要更新原来的 BestHeight 为最新，清理 BestHeaders, 并把最新的加上
 		match current_height.cmp(&best_height) {
 			Ordering::Equal => {
 				<BestHeaders<T>>::append(hash);
@@ -513,6 +549,10 @@ impl<T: Trait> BridgeStorage for PalletStorage<T> {
 			}
 		}
 
+		frame_support::debug::info!(
+			"bear(write_header) write_header header.requires_justification {:?}",
+			header.requires_justification
+		);
 		if header.requires_justification {
 			<RequiresJustification<T>>::insert(hash, current_height);
 		} else {
@@ -563,6 +603,7 @@ impl<T: Trait> BridgeStorage for PalletStorage<T> {
 	}
 
 	fn missing_justifications(&self) -> Vec<HeaderId<BridgedHeader<T>>> {
+		frame_support::debug::info!("bear(missing_justifications)");
 		<RequiresJustification<T>>::iter()
 			.map(|(hash, number)| HeaderId { number, hash })
 			.collect()
@@ -576,6 +617,7 @@ impl<T: Trait> BridgeStorage for PalletStorage<T> {
 		CurrentAuthoritySet::put(new_set)
 	}
 
+	// bear - 替换 authority set
 	fn enact_authority_set(&mut self, signal_hash: BridgedBlockHash<T>) -> Result<(), ()> {
 		let new_set = <NextScheduledChange<T>>::take(signal_hash).ok_or(())?.authority_set;
 		self.update_current_authority_set(new_set);

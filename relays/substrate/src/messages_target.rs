@@ -164,16 +164,19 @@ where
 		Ok((id, proof))
 	}
 
+	// 提交 Proof, 从 message_race_delivery.rs 调过来， 这里调用 Runtime lane 的 make message dilivery transaction 了。
 	async fn submit_messages_proof(
 		&self,
 		generated_at_header: SourceHeaderIdOf<P>,
 		nonces: RangeInclusive<MessageNonce>,
 		proof: P::MessagesProof,
 	) -> Result<RangeInclusive<MessageNonce>, Self::Error> {
+		// 1. 组装交易
 		let tx = self
 			.lane
 			.make_messages_delivery_transaction(generated_at_header, nonces.clone(), proof)
 			.await?;
+		// 发送
 		self.client.submit_extrinsic(Bytes(tx.encode())).await?;
 		Ok(nonces)
 	}

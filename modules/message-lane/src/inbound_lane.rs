@@ -42,6 +42,7 @@ pub trait InboundLaneStorage {
 }
 
 /// Inbound messages lane.
+// bear - 入库车道
 pub struct InboundLane<S> {
 	storage: S,
 }
@@ -53,7 +54,9 @@ impl<S: InboundLaneStorage> InboundLane<S> {
 	}
 
 	/// Receive state of the corresponding outbound lane.
+	// bear - runtime 收到 messages proof 的时候调用该方法，更新 nonce值
 	pub fn receive_state_update(&mut self, outbound_lane_data: OutboundLaneData) -> Option<MessageNonce> {
+		
 		let mut data = self.storage.data();
 		if outbound_lane_data.latest_received_nonce > data.latest_received_nonce {
 			// this is something that should never happen if proofs are correct
@@ -87,12 +90,14 @@ impl<S: InboundLaneStorage> InboundLane<S> {
 	}
 
 	/// Receive new message.
+	// bear - runtime 收到 messages proof 的时候调用该方法，保存message
 	pub fn receive_message<P: MessageDispatch<S::MessageFee>>(
 		&mut self,
 		relayer: S::Relayer,
 		nonce: MessageNonce,
 		message_data: DispatchMessageData<P::DispatchPayload, S::MessageFee>,
 	) -> bool {
+		// 校验 nonce 值是否正确
 		let mut data = self.storage.data();
 		let is_correct_message = nonce == data.latest_received_nonce + 1;
 		if !is_correct_message {
@@ -110,8 +115,10 @@ impl<S: InboundLaneStorage> InboundLane<S> {
 			return false;
 		}
 
+		// 更新 latest_received_nonce
 		data.latest_received_nonce = nonce;
 
+		// 更新 relayer list
 		let push_new = match data.relayers.back_mut() {
 			Some((_, nonce_high, last_relayer)) if last_relayer == &relayer => {
 				*nonce_high = nonce;
@@ -125,6 +132,7 @@ impl<S: InboundLaneStorage> InboundLane<S> {
 
 		self.storage.set_data(data);
 
+		// 分发消息
 		P::dispatch(DispatchMessage {
 			key: MessageKey {
 				lane_id: self.storage.id(),

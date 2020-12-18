@@ -23,9 +23,11 @@ use frame_support::{weights::Weight, Parameter, RuntimeDebug};
 use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, prelude::*};
 
 /// Proved messages from the source chain.
+// bear - 已经证明过的 message
 pub type ProvedMessages<Message> = BTreeMap<LaneId, ProvedLaneMessages<Message>>;
 
 /// Proved messages from single lane of the source chain.
+// bear - 从 receive_message_proof 中解析出来的 lane 数据
 #[derive(RuntimeDebug, Encode, Decode, Clone, PartialEq, Eq)]
 pub struct ProvedLaneMessages<Message> {
 	/// Optional outbound lane state.
@@ -79,6 +81,7 @@ pub trait SourceHeaderChain<Fee> {
 }
 
 /// Called when inbound message is received.
+// 当 ria 收到 relayer 的消息后，进行 call
 pub trait MessageDispatch<Fee> {
 	/// Decoded message payload type. Valid message may contain invalid payload. In this case
 	/// message is delivered, but dispatch fails. Therefore, two separate types of payload

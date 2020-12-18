@@ -77,6 +77,7 @@ pub trait LaneMessageVerifier<Submitter, Payload, Fee> {
 	) -> Result<(), Self::Error>;
 }
 
+// bear - 费用说明
 /// Message delivery payment. It is called as a part of submit-message transaction. Transaction
 /// submitter is paying (in source chain tokens/assets) for:
 ///

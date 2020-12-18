@@ -15,3 +15,5 @@ log = "0.4.11"
 num-traits = "0.2"
 parking_lot = "0.11.0"
 relay-utils = { path = "../utils" }
+
+# 和其他模块没有依赖关系

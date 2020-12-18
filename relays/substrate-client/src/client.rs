@@ -38,6 +38,7 @@ use std::ops::RangeInclusive;
 const SUB_API_GRANDPA_AUTHORITIES: &str = "GrandpaApi_grandpa_authorities";
 
 /// Opaque justifications subscription type.
+// bear - 订阅 justification 的一个客户端
 pub type JustificationsSubscription = Subscription<Bytes>;
 
 /// Opaque GRANDPA authorities set.
@@ -46,6 +47,8 @@ pub type OpaqueGrandpaAuthoritiesSet = Vec<u8>;
 /// Substrate client type.
 ///
 /// Cloning `Client` is a cheap operation.
+// bear
+// substrate rpc client 为了辅助 relayer 使用
 pub struct Client<C: Chain> {
 	/// Client connection params.
 	params: ConnectionParams,
@@ -182,6 +185,9 @@ impl<C: Chain> Client<C> {
 	/// Submit an extrinsic for inclusion in a block.
 	///
 	/// Note: The given transaction does not need be SCALE encoded beforehand.
+	// bear - 调用处：
+	// 1. cli::Command::SubmitMillauToRialtoMessage 处 call 转发调用
+	// 2. message_target submit_messages_proof 处，提交 message proof
 	pub async fn submit_extrinsic(&self, transaction: Bytes) -> Result<C::Hash> {
 		let tx_hash = Substrate::<C, _, _>::author_submit_extrinsic(&self.client, transaction).await?;
 		log::trace!(target: "bridge", "Sent transaction to Substrate node: {:?}", tx_hash);
@@ -207,6 +213,8 @@ impl<C: Chain> Client<C> {
 	}
 
 	/// Returns proof-of-message(s) in given inclusive range.
+	// bear
+	// 这里会前往 runtime 调用，获取到 proof
 	pub async fn prove_messages(
 		&self,
 		instance: InstanceId,

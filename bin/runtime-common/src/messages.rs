@@ -160,6 +160,13 @@ pub mod source {
 	{
 		type Error = &'static str;
 
+		// LaneMessageVerifier 检查
+		// 调用处：
+		// 1. message-lane send message 处
+		// 2.
+		// 流程：
+		// 1. 先使用 pallet bridge call dispatch check origin
+		// 2. 检查 fee 够不够用
 		fn verify_message(
 			submitter: &Sender<AccountIdOf<ThisChain<B>>>,
 			delivery_and_dispatch_fee: &BalanceOf<ThisChain<B>>,
@@ -184,6 +191,7 @@ pub mod source {
 	}
 
 	/// Return maximal message size of This -> Bridged chain message.
+	// message 的最大值为 target chain block 能包含的 exrisic size 的 2/3
 	pub fn maximal_message_size<B: MessageBridge>() -> u32 {
 		B::maximal_extrinsic_size_on_target_chain() / 3 * 2
 	}
@@ -379,6 +387,7 @@ pub mod target {
 				.unwrap_or(0)
 		}
 
+		// bear - ria 侧，接受到 message 后，在这里进行分发
 		fn dispatch(message: DispatchMessage<Self::DispatchPayload, BalanceOf<BridgedChain<B>>>) {
 			if let Ok(payload) = message.data.payload {
 				pallet_bridge_call_dispatch::Module::<ThisRuntime, ThisCallDispatchInstance>::dispatch(
@@ -391,6 +400,7 @@ pub mod target {
 	}
 
 	/// Verify proof of Bridged -> This chain messages.
+	// Runtime 里 receive message proof, 解析到最后，就到了这里
 	pub fn verify_messages_proof<B: MessageBridge, ThisRuntime>(
 		proof: FromBridgedChainMessagesProof<B>,
 		max_messages: MessageNonce,
@@ -445,11 +455,13 @@ pub mod target {
 		}
 	}
 
+	// 检查 message proof 的
 	pub(crate) trait MessageProofParser {
 		fn read_raw_outbound_lane_data(&self, lane_id: &LaneId) -> Option<Vec<u8>>;
 		fn read_raw_message(&self, message_key: &MessageKey) -> Option<Vec<u8>>;
 	}
 
+	// StorageProof Check 适配器
 	struct StorageProofCheckerAdapter<H: Hasher, B, ThisRuntime> {
 		storage: StorageProofChecker<H>,
 		_dummy: sp_std::marker::PhantomData<(B, ThisRuntime)>,
@@ -480,6 +492,7 @@ pub mod target {
 	}
 
 	/// Verify proof of Bridged -> This chain messages using given message proof parser.
+	// bear - 解析 proof
 	pub(crate) fn verify_messages_proof_with_parser<B: MessageBridge, BuildParser, Parser>(
 		proof: FromBridgedChainMessagesProof<B>,
 		max_messages: MessageNonce,
@@ -489,10 +502,12 @@ pub mod target {
 		BuildParser: FnOnce(HashOf<BridgedChain<B>>, StorageProof) -> Result<Parser, MessageProofError>,
 		Parser: MessageProofParser,
 	{
+		// 先把 proof 中包含的字段拿出来
 		let (bridged_header_hash, bridged_storage_proof, lane_id, begin, end) = proof;
 
 		// receiving proofs where end < begin is ok (if proof includes outbound lane state)
 		// => hence unwrap_or(0)
+		// 同一个 proof 里，可能包含多个 message 
 		let messages_in_the_proof = end.checked_sub(begin).and_then(|diff| diff.checked_add(1)).unwrap_or(0);
 		if messages_in_the_proof > max_messages {
 			return Err(MessageProofError::TooManyMessages);
@@ -504,6 +519,7 @@ pub mod target {
 		// be in the proof. So any error in `read_value`, or even missing value is fatal.
 		//
 		// Mind that we allow proofs with no messages if outbound lane state is proved.
+		// bear - 使用 parser 读取 begin-end 之间的所有 message 内容
 		let mut messages = Vec::with_capacity(end.saturating_sub(begin) as _);
 		for nonce in begin..=end {
 			let message_key = MessageKey { lane_id, nonce };

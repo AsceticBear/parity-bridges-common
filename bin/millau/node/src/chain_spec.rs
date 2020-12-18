@@ -159,6 +159,8 @@ fn testnet_genesis(
 		pallet_grandpa: Some(GrandpaConfig {
 			authorities: Vec::new(),
 		}),
+		// bear
+		// 初始化的时候，这里有加这个
 		pallet_substrate_bridge: Some(BridgeRialtoConfig {
 			// We'll initialize the pallet with a dispatchable instead.
 			init_data: None,

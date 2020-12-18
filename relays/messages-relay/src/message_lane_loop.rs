@@ -196,6 +196,7 @@ pub type SourceClientState<P> = ClientState<SourceHeaderIdOf<P>, TargetHeaderIdO
 pub type TargetClientState<P> = ClientState<TargetHeaderIdOf<P>, SourceHeaderIdOf<P>>;
 
 /// Both clients state.
+
 #[derive(Debug, Default)]
 pub struct ClientsState<P: MessageLane> {
 	/// Source client state.
@@ -205,6 +206,8 @@ pub struct ClientsState<P: MessageLane> {
 }
 
 /// Run message lane service loop.
+// bear - message lane loop 启动
+// 1. 从 main -> cli -> millau_messages_to_rialto.rs 处调用过来
 pub fn run<P: MessageLane>(
 	params: Params,
 	mut source_client: impl SourceClient<P>,
@@ -289,7 +292,7 @@ pub fn run<P: MessageLane>(
 				},
 			}
 
-			log::debug!(
+			log::info!(
 				target: "bridge",
 				"Restarting lane {} -> {}",
 				P::SOURCE_NAME,
@@ -300,6 +303,7 @@ pub fn run<P: MessageLane>(
 }
 
 /// Run one-way message delivery loop until connection with target or source node is lost, or exit signal is received.
+// bear - 真正的 run
 async fn run_until_connection_lost<P: MessageLane, SC: SourceClient<P>, TC: TargetClient<P>>(
 	params: Params,
 	source_client: SC,
@@ -326,6 +330,7 @@ async fn run_until_connection_lost<P: MessageLane, SC: SourceClient<P>, TC: Targ
 		(delivery_source_state_sender, delivery_source_state_receiver),
 		(delivery_target_state_sender, delivery_target_state_receiver),
 	) = (unbounded(), unbounded());
+	// race 1
 	let delivery_race_loop = run_message_delivery_race(
 		source_client.clone(),
 		delivery_source_state_receiver,
@@ -337,6 +342,7 @@ async fn run_until_connection_lost<P: MessageLane, SC: SourceClient<P>, TC: Targ
 	)
 	.fuse();
 
+	// race2
 	let (
 		(receiving_source_state_sender, receiving_source_state_receiver),
 		(receiving_target_state_sender, receiving_target_state_receiver),
@@ -374,7 +380,7 @@ async fn run_until_connection_lost<P: MessageLane, SC: SourceClient<P>, TC: Targ
 					new_source_state,
 					&mut source_retry_backoff,
 					|new_source_state| {
-						log::debug!(
+						log::info!(
 							target: "bridge",
 							"Received state from {} node: {:?}",
 							P::SOURCE_NAME,
@@ -405,7 +411,7 @@ async fn run_until_connection_lost<P: MessageLane, SC: SourceClient<P>, TC: Targ
 					new_target_state,
 					&mut target_retry_backoff,
 					|new_target_state| {
-						log::debug!(
+						log::info!(
 							target: "bridge",
 							"Received state from {} node: {:?}",
 							P::TARGET_NAME,
@@ -453,13 +459,13 @@ async fn run_until_connection_lost<P: MessageLane, SC: SourceClient<P>, TC: Targ
 		}
 
 		if source_client_is_online && source_state_required {
-			log::debug!(target: "bridge", "Asking {} node about its state", P::SOURCE_NAME);
+			log::info!(target: "bridge", "Asking {} node about its state", P::SOURCE_NAME);
 			source_state.set(source_client.state().fuse());
 			source_client_is_online = false;
 		}
 
 		if target_client_is_online && target_state_required {
-			log::debug!(target: "bridge", "Asking {} node about its state", P::TARGET_NAME);
+			log::info!(target: "bridge", "Asking {} node about its state", P::TARGET_NAME);
 			target_state.set(target_client.state().fuse());
 			target_client_is_online = false;
 		}

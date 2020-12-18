@@ -66,10 +66,12 @@ where
 
 		// If we parse an empty list of headers it means that bridge pallet has not been initalized
 		// yet. Otherwise we expect to always have at least one header.
-		decoded_response
+		let res = decoded_response
 			.last()
 			.ok_or(SubstrateError::UninitializedBridgePallet)
-			.map(|(num, hash)| HeaderId(*num, *hash))
+			.map(|(num, hash)| HeaderId(*num, *hash));
+		log::info!(target: "bridge", "bear(best_header_id) - res {:?}", res);
+		return res;
 	}
 
 	async fn is_known_header(&self, id: HeaderIdOf<P>) -> Result<(HeaderIdOf<P>, bool), Self::Error> {
@@ -79,6 +81,7 @@ where
 		let encoded_response = self.client.state_call(call, data, None).await?;
 		let is_known_block: bool =
 			Decode::decode(&mut &encoded_response.0[..]).map_err(SubstrateError::ResponseParseFailed)?;
+		log::info!(target: "bridge", "bear(is_known_header) - id {:?}, is known block {:?}", id, is_known_block);
 
 		Ok((id, is_known_block))
 	}
@@ -98,6 +101,7 @@ where
 			.and_then(|tx| self.client.submit_extrinsic(Bytes(tx.encode())))
 			.await;
 
+		log::info!(target: "bridge", "bear(submit_headers) - id {:?}", id);
 		match submit_transaction_result {
 			Ok(_) => SubmittedHeaders {
 				submitted: vec![id],
@@ -114,6 +118,7 @@ where
 		}
 	}
 
+	// bear - 这里其实是 relayer 向 runtime 主动请求，in complete list
 	async fn incomplete_headers_ids(&self) -> Result<HashSet<HeaderIdOf<P>>, Self::Error> {
 		let call = P::INCOMPLETE_HEADERS_METHOD.into();
 		let data = Bytes(Vec::new());
@@ -121,19 +126,23 @@ where
 		let encoded_response = self.client.state_call(call, data, None).await?;
 		let decoded_response: Vec<(P::Number, P::Hash)> =
 			Decode::decode(&mut &encoded_response.0[..]).map_err(SubstrateError::ResponseParseFailed)?;
+		log::info!(target: "bridge", "bear(incomplete_headers_ids) - decoded_response {:?}", decoded_response);
 
 		let incomplete_headers = decoded_response
 			.into_iter()
 			.map(|(number, hash)| HeaderId(number, hash))
 			.collect();
+		log::info!(target: "bridge", "bear(incomplete_headers_ids) - incomplete_headers {:?}", incomplete_headers);
 		Ok(incomplete_headers)
 	}
 
+	// bear -
 	async fn complete_header(
 		&self,
 		id: HeaderIdOf<P>,
 		completion: Justification,
 	) -> Result<HeaderIdOf<P>, Self::Error> {
+		log::info!(target: "bridge", "bear(complete_header) - completion {:?}", completion);
 		let tx = self.pipeline.make_complete_header_transaction(id, completion).await?;
 		self.client.submit_extrinsic(Bytes(tx.encode())).await?;
 		Ok(id)

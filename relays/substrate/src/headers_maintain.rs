@@ -91,23 +91,29 @@ where
 	P::Hash: Decode,
 	P: SubstrateHeadersSyncPipeline<Completion = Justification, Extra = ()>,
 {
+	// bear - maintain
+	// 原理： 这个程序好像是单开用来提供 justifactions 的
+	//
 	async fn maintain(&self, sync: &mut HeadersSync<P>) {
+		log::info!(target: "bridge", "bear - start maintain process");
+		// 1. 拿到 justifications
 		// lock justifications before doing anything else
 		let mut justifications = match self.justifications.try_lock() {
 			Some(justifications) => justifications,
 			None => {
 				// this should never happen, as we use single-thread executor
-				log::warn!(target: "bridge", "Failed to acquire {} justifications lock", P::SOURCE_NAME);
+				log::info!(target: "bridge", "Failed to acquire {} justifications lock", P::SOURCE_NAME);
 				return;
 			}
 		};
 
+		// 2. 查询 target chain 中 best finalized header 是多少
 		// we need to read best finalized header from the target node to be able to
 		// choose justification to submit
 		let best_finalized = match best_finalized_header_id::<P, _>(&self.target_client).await {
 			Ok(best_finalized) => best_finalized,
 			Err(error) => {
-				log::warn!(
+				log::info!(
 					target: "bridge",
 					"Failed to read best finalized {} block from maintain: {:?}",
 					P::SOURCE_NAME,
@@ -116,8 +122,7 @@ where
 				return;
 			}
 		};
-
-		log::debug!(
+		log::info!(
 			target: "bridge",
 			"Read best finalized {} block from {}: {:?}",
 			P::SOURCE_NAME,
@@ -148,13 +153,13 @@ where
 				.await;
 
 			match submit_result {
-				Ok(_) => log::debug!(
+				Ok(_) => log::info!(
 					target: "bridge",
 					"Submitted justification received over {} subscription. Target: {:?}",
 					P::SOURCE_NAME,
 					target,
 				),
-				Err(error) => log::warn!(
+				Err(error) => log::info!(
 					target: "bridge",
 					"Failed to submit justification received over {} subscription for {:?}: {:?}",
 					P::SOURCE_NAME,
@@ -194,7 +199,7 @@ where
 			let target = match target {
 				Ok((target_hash, target_number)) => HeaderId(target_number.into(), target_hash.into()),
 				Err(error) => {
-					log::warn!(
+					log::info!(
 						target: "bridge",
 						"Failed to decode justification from {} subscription: {:?}",
 						P::SOURCE_NAME,
@@ -204,7 +209,7 @@ where
 				}
 			};
 
-			log::debug!(
+			log::info!(
 				target: "bridge",
 				"Received {} justification over subscription. Target: {:?}",
 				P::SOURCE_NAME,
@@ -241,9 +246,12 @@ fn select_justification<P>(
 where
 	P: SubstrateHeadersSyncPipeline<Completion = Justification>,
 {
+	log::info!(target: "bridge", "bear(select_justification-maintain) - start");
 	let mut selected_justification = None;
 	while let Some((target, justification)) = queue.pop_front() {
 		// if we're waiting for this justification, report it
+		log::info!(target: "bridge", "bear(select_justification-maintain) - target {:?}", target);
+		log::info!(target: "bridge", "bear(select_justification-maintain) - sync.headers().requires_completion_data {:?}", sync.headers().requires_completion_data(&target));
 		if sync.headers().requires_completion_data(&target) {
 			sync.headers_mut().completion_response(&target, Some(justification));
 			// we won't submit previous justifications as we going to submit justification for
@@ -285,6 +293,7 @@ where
 		Decode::decode(&mut &encoded_response.0[..]).map_err(SubstrateError::ResponseParseFailed)?;
 
 	let best_header_id = HeaderId(decoded_response.0, decoded_response.1);
+	log::info!(target: "bridge", "bear(best_finalized_header_id-maintain) - best_header_id {:?}", best_header_id);
 	Ok(best_header_id)
 }
 

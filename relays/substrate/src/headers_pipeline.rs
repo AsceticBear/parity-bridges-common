@@ -61,6 +61,7 @@ pub trait SubstrateHeadersSyncPipeline: HeadersSyncPipeline {
 }
 
 /// Substrate-to-Substrate headers pipeline.
+// bear - 同步 substrate header 的 pipeline
 #[derive(Debug, Clone)]
 pub struct SubstrateHeadersToSubstrate<SourceChain, SourceSyncHeader, TargetChain: Chain, TargetSign> {
 	/// Client for the target chain.
@@ -166,6 +167,7 @@ pub async fn run<SourceChain, TargetChain, P>(
 		TargetChain::NAME,
 	);
 
+	// 开始同步 header 了
 	headers_relay::sync_loop::run(
 		HeadersSource::new(source_client),
 		SourceChain::AVERAGE_BLOCK_INTERVAL,

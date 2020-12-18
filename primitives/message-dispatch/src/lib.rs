@@ -42,5 +42,6 @@ pub trait MessageDispatch<MessageId> {
 	/// `id` is a short unique identifier of the message.
 	///
 	/// Returns post-dispatch (actual) message weight.
+	// bear - bridge 设计的初衷是因为可能存在多个 bridge pallet，需要做出选择。
 	fn dispatch(bridge: InstanceId, id: MessageId, message: Self::Message);
 }

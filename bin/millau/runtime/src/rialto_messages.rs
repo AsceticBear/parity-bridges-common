@@ -170,6 +170,8 @@ impl TargetHeaderChain<ToRialtoMessagePayload, bp_rialto::AccountId> for Rialto 
 	// - id of the lane we prove state of.
 	type MessagesDeliveryProof = ToRialtoMessagesDeliveryProof;
 
+	// 校验前往 rialto 的 message payload
+	// 从 send_message 处调用过来
 	fn verify_message(payload: &ToRialtoMessagePayload) -> Result<(), Self::Error> {
 		messages::source::verify_chain_message::<WithRialtoMessageBridge>(payload)
 	}

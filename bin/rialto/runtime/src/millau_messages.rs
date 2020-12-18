@@ -190,6 +190,7 @@ impl SourceHeaderChain<bp_millau::Balance> for Millau {
 	// - inclusive range of messages nonces that are proved.
 	type MessagesProof = FromMillauMessagesProof;
 
+	//
 	fn verify_messages_proof(
 		proof: Self::MessagesProof,
 		max_messages: MessageNonce,
