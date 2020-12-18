@@ -22,7 +22,7 @@
 //! has been signed off by the correct Grandpa authorities, and also enact any authority set changes
 //! if required.
 
-use crate::justification::verify_justification;
+use crate::{justification::verify_justification, mock::helpers::authority_list};
 use crate::storage::{AuthoritySet, ImportedHeader, ScheduledChange};
 use crate::BridgeStorage;
 use finality_grandpa::voter_set::VoterSet;
@@ -151,12 +151,9 @@ where
 		// even across forks), this assumption simplifies our tracking of authority set changes.
 
 		let mut signal_hash = parent_header.signal_hash;
-		frame_support::debug::info!("bear(import_header) signal_hash {:?}", signal_hash);
 		let scheduled_change = find_scheduled_change(&header);
-		frame_support::debug::info!("bear(import_header) scheduled_change {:?}", scheduled_change);
 
 		// Check if our fork is expecting an authority set change
-		// TODO: bear - 这里不理解
 		let requires_justification = if let Some(hash) = signal_hash {
 			const PROOF: &str = "If the header has a signal hash it means there's an accompanying set
 							change in storage, therefore this must always be valid.";

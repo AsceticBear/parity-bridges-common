@@ -346,7 +346,6 @@ decl_module! {
 			.saturating_add(*dispatch_weight)
 		]
 		// Rio 收到 messages proof 之后的处理
-		//
 		pub fn receive_messages_proof(
 			origin,
 			relayer_id: T::InboundRelayer,
@@ -486,7 +485,7 @@ decl_module! {
 				lane_id,
 			);
 
-			8Ok(())
+			Ok(())
 		}
 	}
 }
@@ -508,11 +507,13 @@ impl<T: Trait<I>, I: Instance> Module<T, I> {
 	}
 
 	/// Get nonce of latest received message at given inbound lane.
+	// 获取 inboundLanes 里的 latest_received_nonce
 	pub fn inbound_latest_received_nonce(lane: LaneId) -> MessageNonce {
 		InboundLanes::<T, I>::get(&lane).latest_received_nonce
 	}
 
 	/// Get nonce of latest confirmed message at given inbound lane.
+	// 获取 inboundLanes 里的 last_confirmed_nonce
 	pub fn inbound_latest_confirmed_nonce(lane: LaneId) -> MessageNonce {
 		InboundLanes::<T, I>::get(&lane).latest_confirmed_nonce
 	}

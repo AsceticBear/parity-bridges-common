@@ -77,7 +77,6 @@ pub struct Message<Fee> {
 // bear - 入库车道信息
 #[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq)]
 pub struct InboundLaneData<RelayerId> {
-	// bear - 不是很理解这段话的含义
 	/// Identifiers of relayers and messages that they have delivered (ordered by message nonce).
 	/// It is guaranteed to have at most N entries, where N is configured at module level. If
 	/// there are N entries in this vec, then:

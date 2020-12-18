@@ -54,6 +54,7 @@ where
 		}
 	}
 
+	// bear - 收到 proof 之后，给 repayer 支付一笔费用
 	fn pay_relayer_reward(
 		_confirmation_relayer: &AccountId,
 		relayer: &AccountId,

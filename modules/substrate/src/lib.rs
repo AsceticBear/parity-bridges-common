@@ -99,6 +99,12 @@ decl_storage! {
 		/// Headers which have been imported into the pallet.
 		// bear - 记录 import 到 substrate light client pallet 的存储块头
 		ImportedHeaders: map hasher(identity) BridgedBlockHash<T> => Option<ImportedHeader<BridgedHeader<T>>>;
+		
+		// bear:
+		// ImportedHeaderHash: map hasher(identity) hash -> (hash -> number);
+		// import_signed_header 的时候，采取每个块都进行 relay 的策略，区别在于不保存实际存在的 header，只保存 header 对应的 hash，减轻 client 侧的存储压力。
+		//  这种方式还是不太行，不可取。和不保存区块的意思是一样的。
+
 		/// The current Grandpa Authority set.
 		CurrentAuthoritySet: AuthoritySet;
 		// bear - 不理解这里
@@ -362,6 +368,7 @@ impl<T: Trait> Module<T> {
 			return Err(Error::<T>::UnfinalizedHeader.into());
 		}
 
+		// 这里需要用到 header state root
 		let storage_proof_checker =
 			StorageProofChecker::new(*header.state_root(), storage_proof).map_err(Error::<T>::from)?;
 		Ok(parse(storage_proof_checker))
