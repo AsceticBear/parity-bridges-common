@@ -94,6 +94,7 @@ impl<P: HeadersSyncPipeline> HeadersSync<P> {
 	}
 
 	/// Returns true if we have synced almost all known headers.
+	// 如果 source chain 的 best block 和 target best number 相差小于 4, 就可以认为基本上同步上了
 	pub fn is_almost_synced(&self) -> bool {
 		match self.source_best_number {
 			Some(source_best_number) => self
@@ -120,6 +121,7 @@ impl<P: HeadersSyncPipeline> HeadersSync<P> {
 	}
 
 	/// Select header that needs to be downloaded from the source node.
+	// 选择一个 header 来下载
 	pub fn select_new_header_to_download(&self) -> Option<P::Number> {
 		// if we haven't received best header from source node yet, there's nothing we can download
 		let source_best_number = self.source_best_number?;
@@ -169,6 +171,7 @@ impl<P: HeadersSyncPipeline> HeadersSync<P> {
 	}
 
 	/// Select headers that need to be submitted to the target node.
+	// bear - 一次性提交 headers 的数量
 	pub fn select_headers_to_submit(&self, stalled: bool) -> Option<Vec<&QueuedHeader<P>>> {
 		// maybe we have paused new headers submit?
 		if self.pause_submit {

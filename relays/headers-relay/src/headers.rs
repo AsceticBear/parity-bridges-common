@@ -350,6 +350,7 @@ impl<P: HeadersSyncPipeline> QueuedHeaders<P> {
 	}
 
 	/// Receive completion response from source node.
+	// 从 source node 里读取 completion data
 	pub fn completion_response(&mut self, id: &HeaderIdOf<P>, completion: Option<P::Completion>) {
 		let completion = match completion {
 			Some(completion) => completion,
@@ -837,6 +838,7 @@ fn prune_known_headers<P: HeadersSyncPipeline>(known_headers: &mut KnownHeaders<
 }
 
 /// Change header status.
+// 更新 knownHeaders 的 header status
 fn set_header_status<P: HeadersSyncPipeline>(
 	known_headers: &mut KnownHeaders<P>,
 	id: &HeaderIdOf<P>,

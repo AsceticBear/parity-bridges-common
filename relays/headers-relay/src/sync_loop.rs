@@ -137,9 +137,7 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 	local_pool.run_until(async move {
 		// sync 代表同步 header 的上下文
 		let mut sync = HeadersSync::<P>::new(sync_params);
-		// ？
 		let mut stall_countdown = None;
-		// ？
 		let mut last_update_time = Instant::now();
 
 		// 监控显示的需要
@@ -155,9 +153,7 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 
 		// retry 时候的时间设置
 		let mut source_retry_backoff = retry_backoff();
-		// ？
 		let mut source_client_is_online = false;
-		// ？
 		let mut source_best_block_number_required = false;
 		// 获取 source chain 的 best block number， 一堆 futures
 		let source_best_block_number_future = source_client.best_block_number().fuse();
@@ -210,7 +206,9 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 		loop {
 			futures::select! {
 				source_best_block_number = source_best_block_number_future => {
+					
 					source_best_block_number_required = false;
+					
 					source_client_is_online = process_future_result(
 						source_best_block_number,
 						&mut source_retry_backoff,
@@ -221,6 +219,7 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 					).is_ok();
 				},
 				source_new_header = source_new_header_future => {
+					
 					source_client_is_online = process_future_result(
 						source_new_header,
 						&mut source_retry_backoff,
@@ -242,6 +241,7 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 					).is_ok();
 				},
 				source_extra = source_extra_future => {
+					
 					source_client_is_online = process_future_result(
 						source_extra,
 						&mut source_retry_backoff,
@@ -325,6 +325,7 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 					).is_ok();
 				},
 				target_existence_status = target_existence_status_future => {
+					
 					target_client_is_online = process_future_result(
 						target_existence_status,
 						&mut target_retry_backoff,
@@ -378,6 +379,7 @@ pub fn run<P: HeadersSyncPipeline, TC: TargetClient<P>>(
 					}
 				},
 				target_complete_header_result = target_complete_header_future => {
+
 					target_client_is_online = process_future_result(
 						target_complete_header_result,
 						&mut target_retry_backoff,
