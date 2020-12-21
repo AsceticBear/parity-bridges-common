@@ -115,6 +115,20 @@ decl_storage! {
 		// Grandpa doesn't require there to always be a pending change. In fact, most of the time
 		// there will be no pending change available.
 		NextScheduledChange: map hasher(identity) BridgedBlockHash<T> => Option<ScheduledChange<BridgedBlockNumber<T>>>;
+		// 要基于 mmr 来设计这个方案，mmr 在块头的 header 里，也对外提供了 rpc 来查询某一个 block hash 在 mmr 中的 proof
+		// 可能遇到的问题：
+		//     1. 验证 justification -> 及时地更新 AuthoritySet（在不连续 relay 区块的情况下）
+		//     2. 
+
+		// 思路一： 
+		// 因为问题 1 的存在，所以 relayer 一定要通过某一种方式定期向 client 同步 authority set 变化，那么什么时候同步，同步哪个区块？
+		
+		// 如果想要准确，那么 relayer 这边必须监控 source chain 中的哪些区块的 log 里带有 sigal authority set change, 将带 change 的区块都 relay 到 client 上， client 才能知道 authority set change 的高度。
+		// sigal block 里 delay 指向的块，需要 client 主动向 relayer 请求，请求到之后，修改 client 侧的 authority set.
+
+		// 为了保证 relayer 无状态设计，relayer 启动后基于 target chain 最近 finalized height 查询 source chain height, 并开始监控区块 digest
+
+
 		// bear - 这两项先不用管，是治理相关的
 		/// Optional pallet owner.
 		///
