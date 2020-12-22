@@ -13,3 +13,15 @@ members = [
 	"relays/ethereum",
 	"relays/substrate",
 ]
+
+[patch.'https://github.com/paritytech/substrate.git']
+frame-support = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-system = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-finality-grandpa = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-std = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-trie = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-io = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-keyring = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-state-machine = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
