@@ -22,10 +22,10 @@ pallet-substrate-bridge = { path = "../../modules/substrate", default-features =
 
 # Substrate dependencies
 
-frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-sp-trie = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-trie = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [features]
 default = ["std"]

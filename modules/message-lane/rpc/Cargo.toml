@@ -20,9 +20,9 @@ bp-message-lane = { path = "../../../primitives/message-lane" }
 
 # Substrate Dependencies
 
-sc-client-api = { git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-state-machine = { git = "https://github.com/paritytech/substrate.git", branch = "master" }
-sp-trie = { git = "https://github.com/paritytech/substrate.git", branch = "master" }
+sc-client-api = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-blockchain = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-core = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-state-machine = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-trie = { git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }

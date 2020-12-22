@@ -34,32 +34,32 @@ pallet-shift-session-manager = { path = "../../../modules/shift-session-manager"
 # Substrate Dependencies
 
 frame-benchmarking = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false, optional = true }
-frame-executive = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-frame-system = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-pallet-aura = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-pallet-grandpa = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-pallet-randomness-collective-flip = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-pallet-session = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-pallet-sudo = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-pallet-transaction-payment = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-sp-api = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-sp-block-builder = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-sp-consensus-aura = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-sp-finality-grandpa = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-sp-inherents = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-sp-io = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-sp-offchain = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-sp-session = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-sp-transaction-pool = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-sp-trie = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
-sp-version = { git = "https://github.com/paritytech/substrate.git", branch = "master" , default-features = false }
+frame-executive = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-support = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-system = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+frame-system-rpc-runtime-api = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-aura = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-balances = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-grandpa = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-randomness-collective-flip = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-session = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-sudo = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-timestamp = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+pallet-transaction-payment = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-api = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-block-builder = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-consensus-aura = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-core = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-finality-grandpa = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-inherents = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-io = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-offchain = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-runtime = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-session = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-std = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-transaction-pool = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-trie = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
+sp-version = { default-features = false, git = "https://github.com/darwinia-network/substrate.git", branch = "common-library" }
 
 [dev-dependencies]
 libsecp256k1 = { version = "0.3.4", features = ["hmac"] }
