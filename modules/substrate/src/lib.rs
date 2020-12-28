@@ -227,9 +227,13 @@ decl_module! {
 			origin,
 			init_data: InitializationData<BridgedHeader<T>>,
 		) {
+			frame_support::debug::info!(target: "runtime", "bear- step 1");
 			ensure_owner_or_root::<T>(origin)?;
+			frame_support::debug::info!(target: "runtime", "bear- step 2");
 			let init_allowed = !<BestFinalized<T>>::exists();
+			frame_support::debug::info!(target: "runtime", "bear- step 3");
 			ensure!(init_allowed, <Error<T>>::AlreadyInitialized);
+			frame_support::debug::info!(target: "runtime", "bear- step 4");
 			initialize_bridge::<T>(init_data.clone());
 
 			frame_support::debug::info!(
