@@ -242,9 +242,9 @@ where
 			&proof.0,
 		)
 		.map_err(|_| FinalizationError::InvalidJustification)?;
-		frame_support::debug::trace!(target: "sub-bridge", "Received valid justification for {:?}", header);
+		frame_support::debug::trace!(target: "runtime", "Received valid justification for {:?}", header);
 
-		frame_support::debug::trace!(target: "sub-bridge", "Checking ancestry for headers between {:?} and {:?}", last_finalized, header);
+		frame_support::debug::trace!(target: "runtime", "Checking ancestry for headers between {:?} and {:?}", last_finalized, header);
 		let mut finalized_headers =
 			if let Some(ancestors) = headers_between(&self.storage, last_finalized, header.clone()) {
 				// Since we only try and finalize headers with a height strictly greater

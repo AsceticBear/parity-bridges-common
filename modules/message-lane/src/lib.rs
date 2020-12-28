@@ -261,6 +261,7 @@ decl_module! {
 			T::TargetHeaderChain::verify_message(&payload)
 				.map_err(|err| {
 					frame_support::debug::trace!(
+						target: "runtime",
 						"Message to lane {:?} is rejected by target chain: {:?}",
 						lane_id,
 						err,
@@ -277,6 +278,7 @@ decl_module! {
 				&payload,
 			).map_err(|err| {
 				frame_support::debug::trace!(
+					target: "runtime",
 					"Message to lane {:?} is rejected by lane verifier: {:?}",
 					lane_id,
 					err,
@@ -292,6 +294,7 @@ decl_module! {
 				&relayer_fund_account_id::<T, I>(),
 			).map_err(|err| {
 				frame_support::debug::trace!(
+					target: "runtime",
 					"Message to lane {:?} is rejected because submitter {:?} is unable to pay fee {:?}: {:?}",
 					lane_id,
 					submitter,
@@ -311,6 +314,7 @@ decl_module! {
 			lane.prune_messages(T::MaxMessagesToPruneAtOnce::get());
 
 			frame_support::debug::trace!(
+				target: "runtime",
 				"Accepted message {} to lane {:?}",
 				nonce,
 				lane_id,
@@ -346,6 +350,7 @@ decl_module! {
 			>(proof, T::MaxMessagesInDeliveryTransaction::get())
 				.map_err(|err| {
 					frame_support::debug::trace!(
+						target: "runtime",
 						"Rejecting invalid messages proof: {:?}",
 						err,
 					);
@@ -365,6 +370,7 @@ decl_module! {
 				.sum();
 			if dispatch_weight < actual_dispatch_weight {
 				frame_support::debug::trace!(
+					target: "runtime",
 					"Rejecting messages proof because of dispatch weight mismatch: declared={}, expected={}",
 					dispatch_weight,
 					actual_dispatch_weight,
@@ -383,6 +389,7 @@ decl_module! {
 					let updated_latest_confirmed_nonce = lane.receive_state_update(lane_state);
 					if let Some(updated_latest_confirmed_nonce) = updated_latest_confirmed_nonce {
 						frame_support::debug::trace!(
+							target: "runtime",
 							"Received lane {:?} state update: latest_confirmed_nonce={}",
 							lane_id,
 							updated_latest_confirmed_nonce,
@@ -401,6 +408,7 @@ decl_module! {
 			}
 
 			frame_support::debug::trace!(
+				target: "runtime",
 				"Received messages: total={}, valid={}",
 				total_messages,
 				valid_messages,
@@ -417,6 +425,7 @@ decl_module! {
 			let confirmation_relayer = ensure_signed(origin)?;
 			let (lane_id, lane_data) = T::TargetHeaderChain::verify_messages_delivery_proof(proof).map_err(|err| {
 				frame_support::debug::trace!(
+					target: "runtime",
 					"Rejecting invalid messages delivery proof: {:?}",
 					err,
 				);
@@ -454,6 +463,7 @@ decl_module! {
 			}
 
 			frame_support::debug::trace!(
+				target: "runtime",
 				"Received messages delivery proof up to (and including) {} at lane {:?}",
 				lane_data.latest_received_nonce,
 				lane_id,

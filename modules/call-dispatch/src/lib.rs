@@ -171,6 +171,7 @@ impl<T: Trait<I>, I: Instance> MessageDispatch<T::MessageId> for Module<T, I> {
 		let expected_version = <T as frame_system::Trait>::Version::get().spec_version;
 		if message.spec_version != expected_version {
 			frame_support::debug::trace!(
+				target: "runtime",
 				"Message {:?}/{:?}: spec_version mismatch. Expected {:?}, got {:?}",
 				bridge,
 				id,
@@ -193,6 +194,7 @@ impl<T: Trait<I>, I: Instance> MessageDispatch<T::MessageId> for Module<T, I> {
 		let expected_weight = dispatch_info.weight;
 		if message.weight < expected_weight {
 			frame_support::debug::trace!(
+				target: "runtime",
 				"Message {:?}/{:?}: passed weight is too low. Expected at least {:?}, got {:?}",
 				bridge,
 				id,
@@ -213,7 +215,9 @@ impl<T: Trait<I>, I: Instance> MessageDispatch<T::MessageId> for Module<T, I> {
 			CallOrigin::SourceRoot => {
 				let hex_id = derive_account_id::<T::SourceChainAccountId>(bridge, SourceAccount::Root);
 				let target_id = T::AccountIdConverter::convert(hex_id);
-				frame_support::debug::trace!("Root Account: {:?}", &target_id);
+				frame_support::debug::trace!(
+					target: "runtime",
+					"Root Account: {:?}", &target_id);
 				target_id
 			}
 			CallOrigin::TargetAccount(source_account_id, target_public, target_signature) => {
@@ -224,6 +228,7 @@ impl<T: Trait<I>, I: Instance> MessageDispatch<T::MessageId> for Module<T, I> {
 				let target_account = target_public.into_account();
 				if !target_signature.verify(&signed_message[..], &target_account) {
 					frame_support::debug::trace!(
+						target: "runtime",
 						"Message {:?}/{:?}: origin proof is invalid. Expected account: {:?} from signature: {:?}",
 						bridge,
 						id,
@@ -234,13 +239,13 @@ impl<T: Trait<I>, I: Instance> MessageDispatch<T::MessageId> for Module<T, I> {
 					return;
 				}
 
-				frame_support::debug::trace!("Target Account: {:?}", &target_account);
+				frame_support::debug::trace!(target: "runtime", "Target Account: {:?}", &target_account);
 				target_account
 			}
 			CallOrigin::SourceAccount(source_account_id) => {
 				let hex_id = derive_account_id(bridge, SourceAccount::Account(source_account_id));
 				let target_id = T::AccountIdConverter::convert(hex_id);
-				frame_support::debug::trace!("Source Account: {:?}", &target_id);
+				frame_support::debug::trace!(target: "runtime","Source Account: {:?}", &target_id);
 				target_id
 			}
 		};
@@ -248,11 +253,12 @@ impl<T: Trait<I>, I: Instance> MessageDispatch<T::MessageId> for Module<T, I> {
 		// finally dispatch message
 		let origin = RawOrigin::Signed(origin_account).into();
 
-		frame_support::debug::trace!("Message being dispatched is: {:?}", &message.call);
+		frame_support::debug::trace!(target: "runtime","Message being dispatched is: {:?}", &message.call);
 		let dispatch_result = message.call.dispatch(origin);
 		let actual_call_weight = extract_actual_weight(&dispatch_result, &dispatch_info);
 
 		frame_support::debug::trace!(
+			target: "runtime",
 			"Message {:?}/{:?} has been dispatched. Weight: {} of {}. Result: {:?}",
 			bridge,
 			id,
