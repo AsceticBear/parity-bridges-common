@@ -43,6 +43,10 @@ where
 	) -> Result<(), Self::Error> {
 		match submitter {
 			Sender::Signed(submitter) => {
+				let balance = Currency::free_balance(submitter);
+				frame_support::debug::info!(target: "runtime",
+				    "bear --- address {:?}, balance {:?}", submitter, balance 
+				);
 				Currency::transfer(submitter, relayer_fund_account, *fee, ExistenceRequirement::AllowDeath)
 					.map_err(Into::into)
 			}
