@@ -254,6 +254,8 @@ decl_module! {
 			payload: T::OutboundPayload,
 			delivery_and_dispatch_fee: T::OutboundMessageFee,
 		) -> DispatchResult {
+			frame_support::debug::info!("bear- enter send message");
+
 			ensure_operational::<T, I>()?;
 			let submitter = origin.into().map_err(|_| BadOrigin)?;
 
@@ -287,6 +289,7 @@ decl_module! {
 				Error::<T, I>::MessageRejectedByLaneVerifier
 			})?;
 
+			frame_support::debug::info!("bear- aaa, submiter {:?}, fee {:?}", submitter, delivery_and_dispatch_fee);
 			// let's withdraw delivery and dispatch fee from submitter
 			T::MessageDeliveryAndDispatchPayment::pay_delivery_and_dispatch_fee(
 				&submitter,
