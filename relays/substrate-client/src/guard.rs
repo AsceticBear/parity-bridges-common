@@ -29,7 +29,7 @@ use std::{
 
 /// Guards environment.
 #[async_trait]
-pub trait Environment<C: ChainWithBalances + async_trait>: Send + Sync + 'static {
+pub trait Environment<C: ChainWithBalances>: Send + Sync + 'static {
 	/// Return current runtime version.
 	async fn runtime_version(&mut self) -> Result<RuntimeVersion, String>;
 	/// Return free native balance of the account on the chain.
