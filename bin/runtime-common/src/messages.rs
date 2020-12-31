@@ -265,6 +265,7 @@ pub mod source {
 	}
 
 	/// Verify proof of This -> Bridged chain messages delivery.
+	// 这是 source chain 这边的工作，验证 dilivery proof 
 	pub fn verify_messages_delivery_proof<B: MessageBridge, ThisRuntime>(
 		proof: FromBridgedChainMessagesDeliveryProof<B>,
 	) -> Result<ParsedMessagesDeliveryProofFromBridgedChain<B>, &'static str>
@@ -285,11 +286,13 @@ pub mod source {
 					ThisRuntime,
 					MessageLaneInstanceOf<BridgedChain<B>>,
 				>(&lane);
+				// 直接从 storage 中读取数据
 				let raw_inbound_lane_data = storage
 					.read_value(storage_inbound_lane_data_key.0.as_ref())
 					.map_err(|_| "Failed to read inbound lane state from storage proof")?
 					.ok_or("Inbound lane state is missing from the messages proof")?;
-				let inbound_lane_data = InboundLaneData::decode(&mut &raw_inbound_lane_data[..])
+					// 解码从 storage 中读取的数据  
+					let inbound_lane_data = InboundLaneData::decode(&mut &raw_inbound_lane_data[..])
 					.map_err(|_| "Failed to decode inbound lane state from the proof")?;
 
 				Ok((lane, inbound_lane_data))

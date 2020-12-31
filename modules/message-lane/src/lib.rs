@@ -448,15 +448,15 @@ decl_module! {
 
 			// mark messages as delivered
 			let mut lane = outbound_lane::<T, I>(lane_id);
-			// 更新 OutboundLanes 的 info 信息, 并返回一个确认区间
+			// 更新 OutboundLanes 的 info 信息, 一批一批的来确认的，所以会返回一个确认区间。 
 			let received_range = lane.confirm_delivery(lane_data.latest_received_nonce);
 
 			if let Some(received_range) = received_range {
-				// 这里有个日志
+				// 这里有个确认区间日志
 				Self::deposit_event(RawEvent::MessagesDelivered(lane_id, received_range.0, received_range.1));
 				
+				// 分钱
 				let relayer_fund_account = relayer_fund_account_id::<T, I>();
-
 				// reward relayers that have delivered messages
 				// this loop is bounded by `T::MaxUnconfirmedMessagesAtInboundLane` on the bridged chain
 				for (nonce_low, nonce_high, relayer) in lane_data.relayers {
@@ -556,7 +556,6 @@ pub mod storage_keys {
 	}
 
 	/// Storage key of the outbound message lane state in the runtime storage.
-	// 这个 storage_map_final_key 哪里来的
 	pub fn outbound_lane_data_key<I: Instance>(lane: &LaneId) -> StorageKey {
 		StorageKey(OutboundLanes::<I>::storage_map_final_key(*lane))
 	}
@@ -651,6 +650,7 @@ impl<T: Trait<I>, I: Instance> InboundLaneStorage for RuntimeInboundLaneStorage<
 }
 
 /// Runtime outbound lane storage.
+// 层层包装
 struct RuntimeOutboundLaneStorage<T, I = DefaultInstance> {
 	lane_id: LaneId,
 	_phantom: PhantomData<(T, I)>,
