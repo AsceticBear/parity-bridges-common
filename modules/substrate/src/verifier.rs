@@ -22,7 +22,7 @@
 //! has been signed off by the correct Grandpa authorities, and also enact any authority set changes
 //! if required.
 
-use crate::{justification::verify_justification, mock::helpers::authority_list};
+use crate::{justification::verify_justification};
 use crate::storage::{AuthoritySet, ImportedHeader, ScheduledChange};
 use crate::BridgeStorage;
 use finality_grandpa::voter_set::VoterSet;

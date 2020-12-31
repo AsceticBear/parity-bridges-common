@@ -29,7 +29,7 @@ use std::{
 
 /// Guards environment.
 #[async_trait]
-pub trait Environment<C: ChainWithBalances>: Send + Sync + 'static {
+pub trait Environment<C: ChainWithBalances + async_trait>: Send + Sync + 'static {
 	/// Return current runtime version.
 	async fn runtime_version(&mut self) -> Result<RuntimeVersion, String>;
 	/// Return free native balance of the account on the chain.
@@ -150,7 +150,7 @@ fn conditions_check_delay<C: Chain>() -> Duration {
 }
 
 #[async_trait]
-impl<C: ChainWithBalances> Environment<C> for Client<C> {
+impl<C: ChainWithBalances + 'static > Environment<C> for Client<C> {
 	async fn runtime_version(&mut self) -> Result<RuntimeVersion, String> {
 		Client::<C>::runtime_version(self).await.map_err(|e| e.to_string())
 	}
