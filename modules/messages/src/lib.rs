@@ -137,8 +137,12 @@ pub trait Config<I = DefaultInstance>: frame_system::Config {
 	// Types that are used by outbound_lane (on source chain).
 
 	/// Target header chain.
+	// bear-trace:
+	// 		1. verify message when send message
 	type TargetHeaderChain: TargetHeaderChain<Self::OutboundPayload, Self::AccountId>;
 	/// Message payload verifier.
+	// bear-trace:
+	// 		1. verify message when send message
 	type LaneMessageVerifier: LaneMessageVerifier<Self::AccountId, Self::OutboundPayload, Self::OutboundMessageFee>;
 	/// Message delivery payment.
 	type MessageDeliveryAndDispatchPayment: MessageDeliveryAndDispatchPayment<Self::AccountId, Self::OutboundMessageFee>;
@@ -284,6 +288,10 @@ decl_module! {
 		/// May only be called either by root, or by `PalletOwner`.
 		///
 		/// The weight is: single read for permissions check + 2 writes for parameter value and event.
+
+		// bear-trace:
+		// 1. where did the parameter store?
+		// 2. What kind of valud the parameter contain?
 		#[weight = (T::DbWeight::get().reads_writes(1, 2), DispatchClass::Operational)]
 		pub fn update_pallet_parameter(origin, parameter: T::Parameter) {
 			ensure_owner_or_root::<T, I>(origin)?;
@@ -292,6 +300,15 @@ decl_module! {
 		}
 
 		/// Send message over lane.
+		// bear-trace:
+		// 1. what pre-check they did before send message?
+		// 		- TargetHeaderChain verify message, mainly focus on message payload
+		// 		- LaneMessageVerifier, verifications include, outbound pending_message max, dispatch origin, dilivery and dispatch fee.
+		// 2. how to send message, from ? to ?
+		// send message means save message info into outbound storage.
+		//
+		// Note:
+		// 1. submitter will transfer delivery_and_dispatch fee to relayer-fund-account firstly.
 		#[weight = T::WeightInfo::send_message_weight(payload)]
 		pub fn send_message(
 			origin,
@@ -375,6 +392,8 @@ decl_module! {
 		}
 
 		/// Pay additional fee for the message.
+		// bear-trace:
+		// 1. when to use this function?
 		#[weight = T::WeightInfo::increase_message_fee()]
 		pub fn increase_message_fee(
 			origin,

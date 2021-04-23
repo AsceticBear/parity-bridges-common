@@ -245,6 +245,8 @@ pub mod source {
 	{
 		type Error = &'static str;
 
+		// bear-trace:
+		// 1. used in send_message in message pallet
 		fn verify_message(
 			submitter: &Sender<AccountIdOf<ThisChain<B>>>,
 			delivery_and_dispatch_fee: &BalanceOf<ThisChain<B>>,
@@ -321,6 +323,8 @@ pub mod source {
 	///
 	/// The fee is paid in This chain Balance, but we use Bridged chain balance to avoid additional conversions.
 	/// Returns `None` if overflow has happened.
+	// bear-trace:
+	// 1. used Module send_message -> LaneVerifier verify message -> here
 	pub fn estimate_message_dispatch_and_delivery_fee<B: MessageBridge>(
 		payload: &FromThisChainMessagePayload<B>,
 		relayer_fee_percent: u32,

@@ -343,6 +343,8 @@ impl<T: Config<I>, I: Instance> MessageDispatch<T::MessageId> for Pallet<T, I> {
 /// For example, if a message is sent from a "regular" account on the source chain it will not be
 /// allowed to be dispatched as Root on the target chain. This is a useful check to do on the source
 /// chain _before_ sending a message whose dispatch will be rejected on the target chain.
+// bear-trace:
+// 1. used by send-message -> LaneVerifier verify_message -> here
 pub fn verify_message_origin<SourceChainAccountId, TargetChainAccountPublic, TargetChainSignature, Call>(
 	sender_origin: &RawOrigin<SourceChainAccountId>,
 	message: &MessagePayload<SourceChainAccountId, TargetChainAccountPublic, TargetChainSignature, Call>,
